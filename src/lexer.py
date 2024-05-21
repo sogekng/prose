@@ -1,83 +1,98 @@
-import ply.lex as lex
+import re
+from util.token import Token
 
 
-tokens = (
-    'NUMBER',
-    'PLUS',
-    'MINUS',
-    'TIMES',
-    'DIVIDE',
-    'LPAREN',
-    'RPAREN',
-    'LBRACE',
-    'RBRACE',
-    'EQUALS',
-    'SEMICOLON',
-    'IDENTIFIER',
-    'STRING',
-    'PRINT',
-    'IF',
-    'ELSE',
-    'WHILE',
-    'FOR'
-)
+class Lexer:
+    def __init__(self):
+        self.tokens = []
+        self.current_char = None
+        self.current_position = -1
+        self.current_line = 1
+        self.current_column = 0
+        self.text = ""
+
+        self.token_specs = [
+            ('STRING', r'\"([^\\\n]|(\\.))*?\"'),
+            ('NUMBER', r'\d+'),
+            ('PLUS', r'\+'),
+            ('MINUS', r'-'),
+            ('TIMES', r'\*'),
+            ('DIVIDE', r'/'),
+            ('LPAREN', r'\('),
+            ('RPAREN', r'\)'),
+            ('LBRACE', r'\{'),
+            ('RBRACE', r'\}'),
+            ('EQUALS', r'='),
+            ('SEMICOLON', r';'),
+            ('NEWLINE', r'\n'),
+            ('SKIP', r'[ \t]+'),
+            ('PRINT', r'print'),
+            ('IF', r'if'),
+            ('ELSE', r'else'),
+            ('WHILE', r'while'),
+            ('FOR', r'for'),
+            ('IDENTIFIER', r'[a-zA-Z_][a-zA-Z_0-9]*'),
+        ]
 
 
-reserved = {
-    'print': 'PRINT',
-    'if': 'IF',
-    'else': 'ELSE',
-    'while': 'WHILE',
-    'for': 'FOR'
-}
+    def tokenize(self, text):
+        self.text = text
+        self.current_position = -1
+        self.current_line = 1
+        self.current_column = 0
+        self.tokens = []
+        self.advance()
+
+        while self.current_char is not None:
+            token = self.next_token()
+            if token:
+                self.tokens.append(token)
+
+        return self.tokens
 
 
-t_PLUS      = r'\+'
-t_MINUS     = r'-'
-t_TIMES     = r'\*'
-t_DIVIDE    = r'/'
-t_LPAREN    = r'\('
-t_RPAREN    = r'\)'
-t_EQUALS    = r'='
-t_SEMICOLON = r';'
-t_LBRACE    = r'\{'
-t_RBRACE    = r'\}'
-
-def t_STRING(t):
-    r'\"([^\\\n]|(\\.))*?\"'
-    t.value = t.value[1:-1]
-    return t
+    def advance(self):
+        self.current_position += 1
+        if self.current_position >= len(self.text):
+            self.current_char = None
+        else:
+            self.current_char = self.text[self.current_position]
+            if self.current_char == '\n':
+                self.current_line += 1
+                self.current_column = 0
+            else:
+                self.current_column += 1
 
 
-def t_IDENTIFIER(t):
-    r'[a-zA-Z_][a-zA-Z_0-9]*'
-    t.type = reserved.get(t.value, 'IDENTIFIER')
-    return t
+    def next_token(self):
+        for pattern, regex in self.token_specs:
+            regex = re.compile(regex)
+            match = regex.match(self.text, self.current_position)
+            if match:
+                lexeme = match.group(0)
+                value = lexeme
+                if pattern == 'NUMBER':
+                    value = int(value)
+                elif pattern == 'STRING':
+                    value = value[1:-1]  # Remove as aspas
 
+                if pattern == 'NEWLINE':
+                    self.advance()
+                    return None
+                elif pattern == 'SKIP':
+                    self.advance()
+                    return None
 
-def t_NUMBER(t):
-    r'\d+'
-    t.value = int(t.value)
-    return t
-
-
-t_ignore = ' \t'
-
-
-def t_newline(t):
-    r'\n+'
-    t.lexer.lineno += len(t.value)
-
-
-def t_error(t):
-    print(f"Illegal character '{t.value[0]}'")
-    t.lexer.skip(1)
-
-
-lexer = lex.lex()
+                token = Token(pattern, value, self.current_line, self.current_column)
+                self.current_position += len(lexeme) - 1
+                self.advance()
+                return token
+        self.advance()
+        return None
 
 
 if __name__ == "__main__":
+    lexer = Lexer()
     data = '''
         print("Hello, World!");
         x = 10;
@@ -89,9 +104,8 @@ if __name__ == "__main__":
         while (x < 20) {
             x = x + 2;
         }
-
         for(i=1;i<=10;i++){}
     '''
-    lexer.input(data)
-    for token in lexer:
+    tokens = lexer.tokenize(data)
+    for token in tokens:
         print(token)
