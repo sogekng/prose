@@ -11,6 +11,8 @@ def main():
             print("Tokens gerados:")
             for token in tokens:
                 print(token)
+
+            lexer.log_token(tokens)
     except FileNotFoundError:
         print(f"O arquivo {file_path} não foi encontrado.")
     except Exception as e:
