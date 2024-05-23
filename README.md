@@ -12,4 +12,8 @@
   - Column
 - Avanço (advance): Move para o próximo caractere.
 - Próximo Token (next_token): Determina e retorna o próximo token válido.
+- Log (log_token): Registra os tokens no log
+
+### Main:
+- Registra os tokens de acordo com a classe criada
 
