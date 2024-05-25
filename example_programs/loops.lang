@@ -1,0 +1,11 @@
+create integer variable count 0;
+
+while count < 10 do
+    set count to count + 1;
+end
+
+do
+    set count to count - 1;
+while count > 0 end
+
+write "%d" count;
