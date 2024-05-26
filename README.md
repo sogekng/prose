@@ -8,9 +8,8 @@
   ##### Token
   - Type
   - Value
-  - Line
-  - Column
-- Avanço (advance): Move para o próximo caractere.
+  - Position[Line, Column]
+- Avanço (advance): Avança `steps` posições no texto.
 - Próximo Token (next_token): Determina e retorna o próximo token válido.
 - Log (log_token): Registra os tokens no log
 

@@ -1,0 +1,3 @@
+create integer variable user_content;
+read user_content;
+write "%d" user_content;

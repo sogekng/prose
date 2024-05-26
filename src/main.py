@@ -1,7 +1,7 @@
 from lexer import Lexer
 
 def main():
-    file_path = "teste"
+    file_path = "teste.lang"  # Nome do arquivo com o código fonte
     try:
         with open(file_path, 'r') as file:
             code = file.read()
@@ -12,7 +12,6 @@ def main():
             for token in tokens:
                 print(token)
 
-            lexer.log_token(tokens)
     except FileNotFoundError:
         print(f"O arquivo {file_path} não foi encontrado.")
     except Exception as e:
