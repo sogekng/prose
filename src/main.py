@@ -1,7 +1,7 @@
 from lexer import Lexer
 
 def main():
-    file_path = "teste.lang"  # Nome do arquivo com o código fonte
+    file_path = "teste.lang"
     try:
         with open(file_path, 'r') as file:
             code = file.read()
