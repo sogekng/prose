@@ -14,9 +14,9 @@ def main():
             for token in tokens:
                 print(token)
                 
-            parser = Parser(tokens)
-            result = parser.parse()
-            print("Resultado da expressão:", result)
+            # parser = Parser(tokens)
+            # result = parser.parse()
+            # print("Resultado da expressão:", result)
 
     except FileNotFoundError:
         print(f"O arquivo {file_path} não foi encontrado.")

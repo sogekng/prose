@@ -19,50 +19,56 @@ class Lexer:
         """
         Inicializa o analisador léxico com especificações de tokens e prepara o ambiente de análise.
         """
-        self.tokens = []
-        self.current_char = None
-        self.current_position = -1
-        self.current_line = 1
-        self.current_column = 0
-        self.text = ""
+        self.reset()
         self.token_specs = [
-            ('STRING', r'"([^"\\]|\\.)*"'),
-            ('FORMAT_STRING', r'"([^"\\]|\\.)*(%[sdfb]([^"\\]|\\.)*)*"'),
-            ('NUMBER', r'\d+(\.\d+)?|\.\d+'),
+            ('ADDITION', r'(\+)'),
             ('BOOLEAN', r'\b(true|false)\b'),
-            ('CREATE', r'\bcreate\b'),
-            ('IF', r'\bif\b'),
-            ('ELSE', r'\belse\b'),
-            ('WHILE', r'\bwhile\b'),
-            ('DO', r'\bdo\b'),
-            ('READ', r'\bread\b'),
-            ('WRITE', r'\bwrite\b'),
-            ('VARIABLE', r'\bvariable\b'),
-            ('CONSTANT', r'\bconstant\b'),
-            ('SET', r'\bset\b'),
-            ('TO', r'\bto\b'),
-            ('IDENTIFIER', r'[a-zA-Z_][a-zA-Z0-9_]*'),
-            ('EQUAL', r'=='),
-            ('NOT_EQUAL', r'!='),
+            ('CONSTANT', r'\b(constant)\b'),
+            ('CREATE', r'\b(create)\b'),
+            ('DIVISION', r'(/)'),
+            ('DO', r'\b(do)\b'),
+            ('ELSE', r'\b(else)\b'),
+            ('EQUAL', r'(==)'),
+            ('FORMAT_STRING', r'"([^"\\]|\\.)*(%[sdfb]([^"\\]|\\.)*)*"'),
             ('GREATER', r'>'),
-            ('LESS', r'<'),
-            ('ADDITION', r'\+'),
-            ('SUBTRACTION', r'-'),
-            ('MULTIPLICATION', r'\*'),
-            ('DIVISION', r'/'),
-            ('MODULUS', r'%'),
-            ('LPAREN', r'\('),
-            ('RPAREN', r'\)'),
-            ('LBRACE', r'\{'),
-            ('RBRACE', r'\}'),
-            ('SEMICOLON', r';'),
-            ('NEWLINE', r'\n'),
-            ('SKIP', r'[ \t]+'),
+            ('IDENTIFIER', r'([a-zA-Z_][a-zA-Z0-9_]*)'),
+            ('IF', r'\b(if)\b'),
+            ('LBRACE', r'(\{)'),
+            ('LESS', r'(<)'),
+            ('LPAREN', r'(\()'),
+            ('MODULUS', r'(%)'),
+            ('MULTIPLICATION', r'(\*)'),
+            ('NEWLINE', r'(\n)'),
+            ('NOT_EQUAL', r'(!=)'),
+            ('NUMBER', r'\d+(\.\d+)?|\.\d+'),
+            # ('NUMBER', r'(\d+)'),
+            ('RBRACE', r'(\})'),
+            ('READ', r'\b(read)\b'),
+            ('RPAREN', r'(\))'),
+            ('SEMICOLON', r'(;)'),
+            ('SET', r'\b(set)\b'),
+            # ('SKIP', r'([ \t]+)'),
+            ('SKIP', r'\s+'),
+            ('STRING', r'"([^"\\]|\\.)*"'),
+            ('SUBTRACTION', r'(-)'),
+            ('TO', r'\b(to)\b'),
+            ('VARIABLE', r'\b(variable)\b'),
+            ('WHILE', r'\b(while)\b'),
+            ('WRITE', r'\b(write)\b'),
         ]
         self.token_regex = [(token_type, re.compile(regex)) for token_type, regex in self.token_specs]
+
+
+    def reset(self, new_text=""):
+        self.current_position = 0
+        self.current_line = 1
+        self.current_column = 0
+        self.tokens = []
+        self.current_char = None
+        self.text = new_text
         self.current_char = self.text[0] if self.text else None
 
-
+    
     def tokenize(self, text):
         """
         Processa o texto para extrair tokens conforme as especificações.
@@ -73,17 +79,11 @@ class Lexer:
         Return:
             list: Lista de objetos Token gerados a partir do texto.
         """
-        self.text = text
-        self.current_position = -1
-        self.current_line = 1
-        self.current_column = 0
-        self.tokens = []
-        self.advance()
+        self.reset(text)
 
-        while self.current_char is not None:
-            token = self.next_token()
-            if token:
-                self.tokens.append(token)
+        token = None
+        while (token := self.next_token()) is not None:
+            self.tokens.append(token)
 
         return self.tokens
 
@@ -96,7 +96,8 @@ class Lexer:
             Token: O próximo token identificado ou None se um token deve ser ignorado (como espaços).
         """
         if self.current_char is None:
-            return Token('EOF', '', self.current_line, self.current_column)
+            # return Token('EOF', '', self.current_line, self.current_column)
+            return None
 
         if self.current_char == '\n':
             token = Token('NEWLINE', self.current_char, self.current_line, self.current_column)
@@ -105,16 +106,18 @@ class Lexer:
 
         for token_type, regex in self.token_regex:
             match = regex.match(self.text, self.current_position)
-            if match:
-                lexeme = match.group(0)
-                if token_type == 'SKIP':
-                    self.advance(len(lexeme))
-                    return None
-                start_line = self.current_line
-                start_column = self.current_column
-                token = Token(token_type, lexeme, start_line, start_column)
+
+            if not match:
+                continue
+
+            lexeme = match.group(0)
+            if token_type == 'SKIP':
                 self.advance(len(lexeme))
-                return token
+                # return None
+                continue
+            token = Token(token_type, lexeme, self.current_line, self.current_column)
+            self.advance(len(lexeme))
+            return token
 
         self.advance()
         return None
@@ -126,6 +129,9 @@ class Lexer:
 
         Args:
             steps (int): Número de passos para avançar no texto.
+
+        Return:
+            Token: O próximo token identificado ou None se um token deve ser ignorado (como espaços).
         """
         for _ in range(steps):
             if self.current_position + 1 >= len(self.text):
@@ -133,6 +139,7 @@ class Lexer:
             else:
                 self.current_position += 1
                 self.current_char = self.text[self.current_position]
+
                 if self.current_char == '\n':
                     self.current_line += 1
                     self.current_column = 0
