@@ -1,16 +1,22 @@
 from lexer import Lexer
+from parser_ import Parser
 
 def main():
     file_path = "teste.lang"
+    
     try:
         with open(file_path, 'r') as file:
             code = file.read()
             lexer = Lexer()
+            
             tokens = lexer.tokenize(code)
-
-            print("Tokens gerados:")
+            
             for token in tokens:
                 print(token)
+                
+            parser = Parser(tokens)
+            result = parser.parse()
+            print("Resultado da expressão:", result)
 
     except FileNotFoundError:
         print(f"O arquivo {file_path} não foi encontrado.")

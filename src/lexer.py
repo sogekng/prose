@@ -2,7 +2,23 @@ import re
 from util.token import Token
 
 class Lexer:
+    """
+    Classe Lexer para realizar a análise léxica (tokenização).
+
+    Atributos:
+        tokens (list): Lista de tokens identificados.
+        current_char (str): Caractere atual sendo analisado.
+        current_position (int): Posição atual do caractere no texto.
+        current_line (int): Linha atual no texto.
+        current_column (int): Coluna atual no texto.
+        text (str): Texto completo que está sendo analisado.
+        token_specs (list): Especificações de tokens com nomes e expressões regulares.
+        token_regex (list): Lista de tuplas (tipo de token, expressão regular compilada).
+    """
     def __init__(self):
+        """
+        Inicializa o analisador léxico com especificações de tokens e prepara o ambiente de análise.
+        """
         self.tokens = []
         self.current_char = None
         self.current_position = -1
@@ -12,7 +28,7 @@ class Lexer:
         self.token_specs = [
             ('STRING', r'"([^"\\]|\\.)*"'),
             ('FORMAT_STRING', r'"([^"\\]|\\.)*(%[sdfb]([^"\\]|\\.)*)*"'),
-            ('NUMBER', r'\d+(\.\d*)?'),
+            ('NUMBER', r'\d+(\.\d+)?|\.\d+'),
             ('BOOLEAN', r'\b(true|false)\b'),
             ('CREATE', r'\bcreate\b'),
             ('IF', r'\bif\b'),
@@ -48,6 +64,15 @@ class Lexer:
 
 
     def tokenize(self, text):
+        """
+        Processa o texto para extrair tokens conforme as especificações.
+
+        Args:
+            text (str): Texto a ser tokenizado.
+
+        Return:
+            list: Lista de objetos Token gerados a partir do texto.
+        """
         self.text = text
         self.current_position = -1
         self.current_line = 1
@@ -64,28 +89,44 @@ class Lexer:
 
 
     def next_token(self):
-        while self.current_char is not None:
-            if self.current_char == '\n':
-                token = Token('NEWLINE', self.current_char, self.current_line, self.current_column)
-                self.advance()
-                return token
-            for token_type, regex in self.token_regex:
-                match = regex.match(self.text, self.current_position)
-                if match:
-                    lexeme = match.group(0)
-                    if token_type == 'SKIP':
-                        self.advance(len(lexeme))
-                        return None
-                    start_line = self.current_line
-                    start_column = self.current_column
-                    token = Token(token_type, lexeme, start_line, start_column)
-                    self.advance(len(lexeme))
-                    return token
+        """
+        Identifica o próximo token no texto baseado nas especificações regulares.
+
+        Return:
+            Token: O próximo token identificado ou None se um token deve ser ignorado (como espaços).
+        """
+        if self.current_char is None:
+            return Token('EOF', '', self.current_line, self.current_column)
+
+        if self.current_char == '\n':
+            token = Token('NEWLINE', self.current_char, self.current_line, self.current_column)
             self.advance()
+            return token
+
+        for token_type, regex in self.token_regex:
+            match = regex.match(self.text, self.current_position)
+            if match:
+                lexeme = match.group(0)
+                if token_type == 'SKIP':
+                    self.advance(len(lexeme))
+                    return None
+                start_line = self.current_line
+                start_column = self.current_column
+                token = Token(token_type, lexeme, start_line, start_column)
+                self.advance(len(lexeme))
+                return token
+
+        self.advance()
         return None
 
 
     def advance(self, steps=1):
+        """
+        Avança o caractere atual no texto, atualizando posição, linha e coluna.
+
+        Args:
+            steps (int): Número de passos para avançar no texto.
+        """
         for _ in range(steps):
             if self.current_position + 1 >= len(self.text):
                 self.current_char = None
