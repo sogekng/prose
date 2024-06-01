@@ -34,7 +34,7 @@ class WriteStatement(Statement):
 class SetStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.content) == 3
+            len(self.content) >= 4
             and self.content[0].token_type == TokenType.SET
             and self.content[1].token_type == TokenType.IDENTIFIER
             and self.content[2].token_type == TokenType.TO
@@ -193,14 +193,23 @@ def render_groups(items):
     return groups
 
 def build_statement(group):
+    statement: Statement
+
     if group[0].token_type == TokenType.CREATE:
-        pass
+        statement = CreateStatement(group)
     elif group[0].token_type == TokenType.WRITE:
-        pass
+        statement = WriteStatement(group)
+    elif group[0].token_type == TokenType.READ:
+        statement = ReadStatement(group)
     elif group[0].token_type == TokenType.SET:
-        pass
+        statement = SetStatement(group)
     else:
         raise Exception(f"Unexpected token type '{group[0].token_type}'")
+
+    if not statement.validate_syntax():
+        raise Exception(f"Invalid syntax for token type '{group[0].token_type}'")
+
+    return statement
 
 def synthesize_statements(items):
     i = 0
@@ -209,10 +218,12 @@ def synthesize_statements(items):
         item = items[i]
 
         if type(item) == StructureGroup:
-            pass
+            synthesize_statements(item.content)
         elif type(item) == list:
             if len(item) == 0:
                 raise Exception("Unexpected empty statement group")
             items[i] = build_statement(item)
         else:
-            raise Exception("Unexpected ungrouped element")
+            raise Exception(f"Unexpected ungrouped element {item}")
+
+        i += 1
