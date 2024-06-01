@@ -22,7 +22,7 @@ class Lexer:
         self.reset()
         self.token_specs = [
             # Specials
-            ('SKIP', r'[\s\n]+'),
+            ('SKIP', r'([\s\n]+)|#.*'),
 
             # Operators
             ('ADDITION', r'\+'),
@@ -41,9 +41,7 @@ class Lexer:
             ('STRING', r'"([^"\\]|\\.)*"'),
 
             # Delimiters
-            ('LBRACE', r'\{'),
             ('LPAREN', r'\('),
-            ('RBRACE', r'\}'),
             ('RPAREN', r'\)'),
             ('SEMICOLON', r';'),
 

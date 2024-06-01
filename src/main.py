@@ -1,5 +1,4 @@
 from lexer import Lexer
-from parser_ import Parser
 
 def main():
     file_path = "teste.lang"
