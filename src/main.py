@@ -13,9 +13,25 @@ def main():
 
             tokens = lexer.tokenize(code)
 
-            token_groups = parsa.group_tokens(tokens)
+            print("• [TOKENS]")
 
+            pprint.pp(tokens)
+
+            print()
+
+            print("• [TOKEN GROUPS]")
+
+            token_groups = parsa.group_tokens(tokens)
             pprint.pp(token_groups)
+
+            print()
+
+            print("• [RENDERED TOKEN GROUPS]")
+
+            rendered_tokens = parsa.render_groups(token_groups)
+            pprint.pp(rendered_tokens)
+
+            print()
 
     except FileNotFoundError:
         print(f"O arquivo {file_path} não foi encontrado.")

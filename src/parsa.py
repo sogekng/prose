@@ -55,6 +55,17 @@ def find_matching_end(tokens, offset):
     return -1
 
 
+def group_statement(tokens: list, offset: int):
+    statement = []
+
+    statement_end = find_next_token(tokens, TokenType.SEMICOLON, offset)
+
+    if statement_end == -1:
+        raise Exception("statement is never finished")
+
+    return tokens[offset:statement_end]
+
+
 def group_tokens(tokens):
     i = 0
 
@@ -129,3 +140,27 @@ def group_tokens(tokens):
         i += 1
 
     return groups
+
+
+def render_groups(items):
+    if not items:
+        return items
+
+    groups = []
+
+    i = 0
+
+    while i < len(items):
+        item = items[i]
+
+        if type(item) == StructureGroup:
+            item.content = render_groups(item.content)
+            groups.append(item)
+            i += 1
+        else:
+            grouped = group_statement(items, i)
+            groups.append(grouped)
+            i += len(grouped) + 1
+
+    return groups
+
