@@ -1,0 +1,3 @@
+create string variable x "sex";
+create string variable y;
+read y;

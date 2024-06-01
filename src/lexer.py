@@ -21,40 +21,51 @@ class Lexer:
         """
         self.reset()
         self.token_specs = [
-            ('ADDITION', r'(\+)'),
-            ('BOOLEAN', r'\b(true|false)\b'),
-            ('CONSTANT', r'\b(constant)\b'),
-            ('CREATE', r'\b(create)\b'),
-            ('DIVISION', r'(/)'),
-            ('DO', r'\b(do)\b'),
-            ('ELSE', r'\b(else)\b'),
-            ('EQUAL', r'(==)'),
-            ('FORMAT_STRING', r'"([^"\\]|\\.)*(%[sdfb]([^"\\]|\\.)*)*"'),
+            # Specials
+            ('SKIP', r'[\s\n]+'),
+
+            # Operators
+            ('ADDITION', r'\+'),
+            ('DIVISION', r'/'),
+            ('EQUAL', r'=='),
             ('GREATER', r'>'),
-            ('IDENTIFIER', r'([a-zA-Z_][a-zA-Z0-9_]*)'),
-            ('IF', r'\b(if)\b'),
-            ('LBRACE', r'(\{)'),
-            ('LESS', r'(<)'),
-            ('LPAREN', r'(\()'),
-            ('MODULUS', r'(%)'),
-            ('MULTIPLICATION', r'(\*)'),
-            ('NEWLINE', r'(\n)'),
-            ('NOT_EQUAL', r'(!=)'),
+            ('LESS', r'<'),
+            ('MODULUS', r'%'),
+            ('MULTIPLICATION', r'\*'),
+            ('NOT_EQUAL', r'!='),
+            ('SUBTRACTION', r'-'),
+
+            # Literals
+            ('BOOLEAN', r'\btrue|false\b'),
             ('NUMBER', r'\d+(\.\d+)?|\.\d+'),
-            # ('NUMBER', r'(\d+)'),
-            ('RBRACE', r'(\})'),
-            ('READ', r'\b(read)\b'),
-            ('RPAREN', r'(\))'),
-            ('SEMICOLON', r'(;)'),
-            ('SET', r'\b(set)\b'),
-            # ('SKIP', r'([ \t]+)'),
-            ('SKIP', r'\s+'),
             ('STRING', r'"([^"\\]|\\.)*"'),
-            ('SUBTRACTION', r'(-)'),
-            ('TO', r'\b(to)\b'),
-            ('VARIABLE', r'\b(variable)\b'),
-            ('WHILE', r'\b(while)\b'),
-            ('WRITE', r'\b(write)\b'),
+
+            # Delimiters
+            ('LBRACE', r'\{'),
+            ('LPAREN', r'\('),
+            ('RBRACE', r'\}'),
+            ('RPAREN', r'\)'),
+            ('SEMICOLON', r';'),
+
+            # Types
+            ('TYPE', r'\b(string)|(integer)|(rational)|(boolean)\b'),
+
+            # Keywords
+            ('VARTYPE', r'\b(constant)|(variable)\b'),
+            ('CREATE', r'\bcreate\b'),
+            ('DO', r'\bdo\b'),
+            ('ELSE', r'\belse\b'),
+            ('ELSE', r'\belif\b'),
+            ('IF', r'\bif\b'),
+            ('READ', r'\bread\b'),
+            ('SET', r'\bset\b'),
+            ('TO', r'\bto\b'),
+            ('WHILE', r'\bwhile\b'),
+            ('WRITE', r'\bwrite\b'),
+            ('END', r'\bend\b'),
+            ('THEN', r'\bthen\b'),
+
+            ('IDENTIFIER', r'([a-zA-Z_][a-zA-Z0-9_]*)'),
         ]
         self.token_regex = [(token_type, re.compile(regex)) for token_type, regex in self.token_specs]
 
@@ -83,7 +94,8 @@ class Lexer:
 
         token = None
         while (token := self.next_token()) is not None:
-            self.tokens.append(token)
+            if token.type != 'SKIP':
+                self.tokens.append(token)
 
         return self.tokens
 
@@ -100,7 +112,7 @@ class Lexer:
             return None
 
         if self.current_char == '\n':
-            token = Token('NEWLINE', self.current_char, self.current_line, self.current_column)
+            token = Token('SKIP', self.current_char, self.current_line, self.current_column)
             self.advance()
             return token
 
@@ -111,10 +123,6 @@ class Lexer:
                 continue
 
             lexeme = match.group(0)
-            if token_type == 'SKIP':
-                self.advance(len(lexeme))
-                # return None
-                continue
             token = Token(token_type, lexeme, self.current_line, self.current_column)
             self.advance(len(lexeme))
             return token
