@@ -22,6 +22,25 @@ class CreateStatement(Statement):
         )
 
 
+class WriteStatement(Statement):
+    def validate_syntax(self) -> bool:
+        return (
+            len(self.content) >= 2 and
+            self.content[0].token_type == TokenType.WRITE and
+            self.content[1].token_type == TokenType.STRING
+        )
+
+
+class SetStatement(Statement):
+    def validate_syntax(self) -> bool:
+        return (
+                len(self.content) == 3
+                and self.content[0].token_type == TokenType.SET
+                and self.content[1].token_type == TokenType.IDENTIFIER
+                and self.content[2].token_type == TokenType.TO
+        )
+
+
 @dataclass
 class StructureGroup:
     structure_type: TokenType
