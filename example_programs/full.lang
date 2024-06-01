@@ -36,6 +36,10 @@ while i < 0 do
     write "%d" i;
 end
 
+do
+    set i to 0;
+while x == y end
+
 create string variable answer;
 read answer;
 

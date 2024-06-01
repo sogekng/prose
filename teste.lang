@@ -1,1 +1,25 @@
 create string variable x "sex"; # teste banana
+
+x = 0
+
+if boseta then
+    write "banana";
+end
+
+create integer constant y 15; # teste banana
+
+
+if boseta then
+    write "banana";
+end
+
+while boseta do
+    write "banana";
+end
+
+do
+    write "banana";
+while boseta end
+
+condition:
+content:

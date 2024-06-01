@@ -1,4 +1,6 @@
 from lexer import Lexer
+import parsa
+import pprint
 
 def main():
     file_path = "teste.lang"
@@ -10,8 +12,12 @@ def main():
             
             tokens = lexer.tokenize(code)
             
-            for token in tokens:
-                print(token)
+            # for token in tokens:
+            #     print(token)
+
+            token_groups = parsa.group_tokens(tokens)
+
+            pprint.pp(token_groups)
                 
             # parser = Parser(tokens)
             # result = parser.parse()
