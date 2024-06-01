@@ -20,7 +20,8 @@ def main():
     except FileNotFoundError:
         print(f"O arquivo {file_path} não foi encontrado.")
     except Exception as e:
-        print(f"Ocorreu um erro ao processar o arquivo: {e}")
+        raise e
+        # print(f"Ocorreu um erro ao processar o arquivo: {e}")
 
 
 if __name__ == "__main__":

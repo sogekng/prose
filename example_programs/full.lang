@@ -31,11 +31,6 @@ end
 
 create integer variable i 0;
 
-while i < 0 do
-    set i to i + 1;
-    write "%d" i;
-end
-
 do
     set i to 0;
 while x == y end

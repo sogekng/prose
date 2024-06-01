@@ -1,5 +1,51 @@
 import re
-from util.token import Token
+from util.token import Token, TokenType
+
+token_regex = {
+    # Specials
+    TokenType.SKIP: re.compile(r'([\s\n]+)|#.*'),
+
+    # Operators
+    TokenType.ADDITION: re.compile(r'\+'),
+    TokenType.DIVISION: re.compile(r'/'),
+    TokenType.EQUAL: re.compile(r'=='),
+    TokenType.GREATER: re.compile(r'>'),
+    TokenType.LESS: re.compile(r'<'),
+    TokenType.MODULUS: re.compile(r'%'),
+    TokenType.MULTIPLICATION: re.compile(r'\*'),
+    TokenType.NOT_EQUAL: re.compile(r'!='),
+    TokenType.SUBTRACTION: re.compile(r'-'),
+
+    # Literals
+    TokenType.BOOLEAN: re.compile(r'\btrue|false\b'),
+    TokenType.NUMBER: re.compile(r'\d+(\.\d+)?|\.\d+'),
+    TokenType.STRING: re.compile(r'"([^"\\]|\\.)*"'),
+
+    # Delimiters
+    TokenType.LPAREN: re.compile(r'\('),
+    TokenType.RPAREN: re.compile(r'\)'),
+    TokenType.SEMICOLON: re.compile(r';'),
+
+    # Types
+    TokenType.TYPE: re.compile(r'\b(string)|(integer)|(rational)|(boolean)\b'),
+
+    # Keywords
+    TokenType.VARTYPE: re.compile(r'\b(constant)|(variable)\b'),
+    TokenType.CREATE: re.compile(r'\bcreate\b'),
+    TokenType.DO: re.compile(r'\bdo\b'),
+    TokenType.ELSE: re.compile(r'\belse\b'),
+    TokenType.ELSE: re.compile(r'\belif\b'),
+    TokenType.IF: re.compile(r'\bif\b'),
+    TokenType.READ: re.compile(r'\bread\b'),
+    TokenType.SET: re.compile(r'\bset\b'),
+    TokenType.TO: re.compile(r'\bto\b'),
+    TokenType.WHILE: re.compile(r'\bwhile\b'),
+    TokenType.WRITE: re.compile(r'\bwrite\b'),
+    TokenType.END: re.compile(r'\bend\b'),
+    TokenType.THEN: re.compile(r'\bthen\b'),
+
+    TokenType.IDENTIFIER: re.compile(r'([a-zA-Z_][a-zA-Z0-9_]*)'),
+}
 
 class Lexer:
     """
@@ -20,52 +66,6 @@ class Lexer:
         Inicializa o analisador léxico com especificações de tokens e prepara o ambiente de análise.
         """
         self.reset()
-        self.token_specs = [
-            # Specials
-            ('SKIP', r'([\s\n]+)|#.*'),
-
-            # Operators
-            ('ADDITION', r'\+'),
-            ('DIVISION', r'/'),
-            ('EQUAL', r'=='),
-            ('GREATER', r'>'),
-            ('LESS', r'<'),
-            ('MODULUS', r'%'),
-            ('MULTIPLICATION', r'\*'),
-            ('NOT_EQUAL', r'!='),
-            ('SUBTRACTION', r'-'),
-
-            # Literals
-            ('BOOLEAN', r'\btrue|false\b'),
-            ('NUMBER', r'\d+(\.\d+)?|\.\d+'),
-            ('STRING', r'"([^"\\]|\\.)*"'),
-
-            # Delimiters
-            ('LPAREN', r'\('),
-            ('RPAREN', r'\)'),
-            ('SEMICOLON', r';'),
-
-            # Types
-            ('TYPE', r'\b(string)|(integer)|(rational)|(boolean)\b'),
-
-            # Keywords
-            ('VARTYPE', r'\b(constant)|(variable)\b'),
-            ('CREATE', r'\bcreate\b'),
-            ('DO', r'\bdo\b'),
-            ('ELSE', r'\belse\b'),
-            ('ELSE', r'\belif\b'),
-            ('IF', r'\bif\b'),
-            ('READ', r'\bread\b'),
-            ('SET', r'\bset\b'),
-            ('TO', r'\bto\b'),
-            ('WHILE', r'\bwhile\b'),
-            ('WRITE', r'\bwrite\b'),
-            ('END', r'\bend\b'),
-            ('THEN', r'\bthen\b'),
-
-            ('IDENTIFIER', r'([a-zA-Z_][a-zA-Z0-9_]*)'),
-        ]
-        self.token_regex = [(token_type, re.compile(regex)) for token_type, regex in self.token_specs]
 
 
     def reset(self, new_text=""):
@@ -92,7 +92,7 @@ class Lexer:
 
         token = None
         while (token := self.next_token()) is not None:
-            if token.type != 'SKIP':
+            if token.token_type != TokenType.SKIP:
                 self.tokens.append(token)
 
         return self.tokens
@@ -110,11 +110,11 @@ class Lexer:
             return None
 
         if self.current_char == '\n':
-            token = Token('SKIP', self.current_char, self.current_line, self.current_column)
+            token = Token(TokenType.SKIP, self.current_char, self.current_line, self.current_column)
             self.advance()
             return token
 
-        for token_type, regex in self.token_regex:
+        for token_type, regex in token_regex.items():
             match = regex.match(self.text, self.current_position)
 
             if not match:

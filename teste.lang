@@ -4,6 +4,7 @@ if count < 10 then
     write "is less than 10 :0";
     if count == 0 then
         write "is zero ;D";
+        write "test string";
     end
     while count < 5 do
         if count == 2 then
@@ -12,6 +13,7 @@ if count < 10 then
     end
     do
         write "end :D";
+        set count to 5;
         if count == 2 then
             write "is two XD";
         end
