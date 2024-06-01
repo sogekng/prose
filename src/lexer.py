@@ -34,7 +34,7 @@ token_regex = {
     TokenType.CREATE: re.compile(r'\bcreate\b'),
     TokenType.DO: re.compile(r'\bdo\b'),
     TokenType.ELSE: re.compile(r'\belse\b'),
-    TokenType.ELSE: re.compile(r'\belif\b'),
+    TokenType.ELIF: re.compile(r'\belif\b'),
     TokenType.IF: re.compile(r'\bif\b'),
     TokenType.READ: re.compile(r'\bread\b'),
     TokenType.SET: re.compile(r'\bset\b'),

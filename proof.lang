@@ -3,4 +3,6 @@ set count to 1;
 
 if count > 0 then
     write "Success!";
+else then
+    write "Not success!";
 end

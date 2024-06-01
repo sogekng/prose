@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+
 class TokenType(Enum):
     # Specials
     NONE = auto()
@@ -34,6 +35,7 @@ class TokenType(Enum):
     CREATE = auto()
     DO = auto()
     ELSE = auto()
+    ELIF = auto()
     IF = auto()
     READ = auto()
     SET = auto()
