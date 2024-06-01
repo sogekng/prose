@@ -33,6 +33,11 @@ def main():
 
             print()
 
+            print("• [SYNTHESIZED GROUPS]")
+
+            synthesized_groups = parsa.synthesize_statements(rendered_tokens)
+            pprint.pp(synthesized_groups)
+
     except FileNotFoundError:
         print(f"O arquivo {file_path} não foi encontrado.")
     except Exception as e:

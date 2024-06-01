@@ -25,19 +25,19 @@ class CreateStatement(Statement):
 class WriteStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.content) >= 2 and
-            self.content[0].token_type == TokenType.WRITE and
-            self.content[1].token_type == TokenType.STRING
+            len(self.content) >= 2
+            and self.content[0].token_type == TokenType.WRITE
+            and self.content[1].token_type == TokenType.STRING
         )
 
 
 class SetStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-                len(self.content) == 3
-                and self.content[0].token_type == TokenType.SET
-                and self.content[1].token_type == TokenType.IDENTIFIER
-                and self.content[2].token_type == TokenType.TO
+            len(self.content) == 3
+            and self.content[0].token_type == TokenType.SET
+            and self.content[1].token_type == TokenType.IDENTIFIER
+            and self.content[2].token_type == TokenType.TO
         )
 
 
@@ -183,3 +183,27 @@ def render_groups(items):
 
     return groups
 
+def build_statement(group):
+    if group[0].token_type == TokenType.CREATE:
+        pass
+    elif group[0].token_type == TokenType.WRITE:
+        pass
+    elif group[0].token_type == TokenType.SET:
+        pass
+    else:
+        raise Exception(f"Unexpected token type '{group[0].token_type}'")
+
+def synthesize_statements(items):
+    i = 0
+
+    while i < len(items):
+        item = items[i]
+
+        if type(item) == StructureGroup:
+            pass
+        elif type(item) == list:
+            if len(item) == 0:
+                raise Exception("Unexpected empty statement group")
+            items[i] = build_statement(item)
+        else:
+            raise Exception("Unexpected ungrouped element")
