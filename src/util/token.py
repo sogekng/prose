@@ -46,6 +46,10 @@ class TokenType(Enum):
     IDENTIFIER = auto()
 
 
+STRUCTURE_TOKENS = [TokenType.IF, TokenType.WHILE, TokenType.DO]
+LITERAL_TOKENS = [TokenType.BOOLEAN, TokenType.NUMBER, TokenType.STRING]
+
+
 class Token:
     def __init__(self, token_type, value, line, column):
         self.token_type = token_type

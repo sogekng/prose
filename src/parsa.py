@@ -1,16 +1,35 @@
-from util.token import TokenType
+from util.token import TokenType, STRUCTURE_TOKENS, LITERAL_TOKENS
+from dataclasses import dataclass
 
+
+@dataclass
+class Statement:
+    content: list
+
+    def validate_syntax(self) -> bool:
+        return True
+
+
+class CreateStatement(Statement):
+    def validate_syntax(self) -> bool:
+        return (
+            len(self.content) >= 4
+            and self.content[0].token_type == TokenType.CREATE
+            and self.content[1].token_type == TokenType.TYPE
+            and self.content[2].token_type == TokenType.VARTYPE
+            and self.content[3].token_type == TokenType.IDENTIFIER
+            and len(self.content) == 4 or self.content[4].token_type in LITERAL_TOKENS
+        )
+
+
+@dataclass
 class StructureGroup:
-    def __init__(self, structure_type, condition, content):
-        self.structure_type = structure_type
-        self.condition = condition
-        self.content = content
+    structure_type: TokenType
+    condition: list
+    content: list
 
     def __repr__(self):
         return f"StructureGroup(type={self.structure_type}, condition={self.condition}, content={self.content})"
-
-
-STRUCTURE_TOKENS = [TokenType.IF, TokenType.WHILE, TokenType.DO]
 
 
 def find_next_token(tokens, token_type, offset):
