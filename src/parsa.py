@@ -41,6 +41,15 @@ class SetStatement(Statement):
         )
 
 
+class ReadStatement(Statement):
+    def validate_syntax(self) -> bool:
+        return (
+            len(self.content) == 2 and
+            self.content[0].token_type == TokenType.READ and
+            self.content[1].token_type == TokenType.IDENTIFIER
+        )
+
+
 @dataclass
 class StructureGroup:
     structure_type: TokenType
