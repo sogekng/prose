@@ -1,6 +1,8 @@
 create integer variable count 0;
 set count to 1;
 
+write count;
+
 if count > 0 then
     write "Success!";
 end

@@ -27,7 +27,7 @@ class WriteStatement(Statement):
         return (
             len(self.content) >= 2
             and self.content[0].token_type == TokenType.WRITE
-            and self.content[1].token_type == TokenType.STRING
+            and self.content[1].token_type == TokenType.STRING or TokenType.IDENTIFIER
         )
 
 
