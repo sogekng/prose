@@ -3,9 +3,32 @@ import parsa
 import pprint
 import sys
 from os import path
-
+import subprocess
 
 EXTENSION = "lang"
+
+
+def print_(code):
+    lexer = Lexer()
+    tokens = lexer.tokenize(code)
+
+    print("• [TOKENS]")
+    pprint.pp(tokens)
+    print()
+
+    print("• [TOKEN GROUPS]")
+    token_groups = parsa.group_tokens(tokens)
+    pprint.pp(token_groups)
+    print()
+
+    print("• [RENDERED TOKEN GROUPS]")
+    rendered_tokens = parsa.render_groups(token_groups)
+    pprint.pp(rendered_tokens)
+    print()
+
+    print("• [SYNTHESIZED GROUPS]")
+    parsa.synthesize_statements(rendered_tokens)
+    pprint.pp(rendered_tokens)
 
 
 def main():
@@ -35,33 +58,10 @@ def main():
             code = file.read()
 
         lexer = Lexer()
-
         tokens = lexer.tokenize(code)
-
-        print("• [TOKENS]")
-
-        pprint.pp(tokens)
-
-        print()
-
-        print("• [TOKEN GROUPS]")
-
         token_groups = parsa.group_tokens(tokens)
-        pprint.pp(token_groups)
-
-        print()
-
-        print("• [RENDERED TOKEN GROUPS]")
-
         rendered_tokens = parsa.render_groups(token_groups)
-        pprint.pp(rendered_tokens)
-
-        print()
-
-        print("• [SYNTHESIZED GROUPS]")
-
         parsa.synthesize_statements(rendered_tokens)
-        pprint.pp(rendered_tokens)
 
         print("Output:", output_path)
 
@@ -75,12 +75,24 @@ def main():
             # Epilogue
             output_file.write("}}\n")
 
+        # Compilar o arquivo Java
+        compile_command = ["javac", output_path]
+        subprocess.run(compile_command, check=True)
+        print(f"Arquivo {output_path} compilado com sucesso.")
+
+        # Executar o arquivo Java compilado
+        execute_command = ["java", "-cp", path_dirname, program_name]
+        result = subprocess.run(execute_command, check=True, capture_output=True, text=True)
+        print("Saída da execução do programa Java:\n")
+        print(result.stdout)
+
     except FileNotFoundError:
         print(f"O arquivo {file_path} não foi encontrado.")
+    except subprocess.CalledProcessError as e:
+        print(f"Erro ao compilar ou executar o arquivo Java: {e}")
+        print(f"Saída do erro: {e.output}")
     except Exception as e:
-        raise e
-        # print(f"Ocorreu um erro ao processar o arquivo: {e}")
-
+        print(f"Ocorreu um erro ao processar o arquivo: {e}")
 
 if __name__ == "__main__":
     main()
