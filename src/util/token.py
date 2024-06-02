@@ -34,8 +34,8 @@ class TokenType(Enum):
     VARTYPE = auto()
     CREATE = auto()
     DO = auto()
-    ELSE = auto()
     ELIF = auto()
+    ELSE = auto()
     IF = auto()
     READ = auto()
     SET = auto()
@@ -48,7 +48,7 @@ class TokenType(Enum):
     IDENTIFIER = auto()
 
 
-STRUCTURE_TOKENS = [TokenType.IF, TokenType.WHILE, TokenType.DO]
+STRUCTURE_TOKENS = [TokenType.IF, TokenType.ELIF, TokenType.ELSE, TokenType.WHILE, TokenType.DO]
 LITERAL_TOKENS = [TokenType.BOOLEAN, TokenType.NUMBER, TokenType.STRING]
 
 

@@ -3,6 +3,17 @@ set count to 1;
 
 if count > 0 then
     write "Success!";
+end
+elif count == 1 then
+    write "Sucess?";
+end
+elif count == 2 then
+    write "Sucess?";
+end
 else then
     write "Not success!";
 end
+
+do
+    set count to count - 1;
+while count > 0 end
