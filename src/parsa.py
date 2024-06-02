@@ -53,9 +53,10 @@ class CreateStatement(Statement):
         attributes = self.get_attributes() # Puxa os atributos atuais da variavel
 
         # Cria uma variavel no dicionario 'variables' inicializado no execute.py
-        executor.variables[attributes["identifier"]] = (attributes["value"]
-                                                        if attributes["value"] is not None
-                                                        else None, attributes["type"])
+        executor.variables[attributes["identifier"]] = (attributes["type"],
+                                                        attributes["var_type"],
+                                                        attributes["value"]
+                                                        if attributes["value"] is not None else None)
 
         # Verifica os tipos das variaveis e retorna a sintaxe do java com a verificação de tipo de variavel
         if attributes["type"] == "integer":
@@ -86,26 +87,17 @@ class WriteStatement(Statement):
                      or self.content[1].token_type == TokenType.IDENTIFIER)
         )
 
-    # Verifica o tipo da variavel e converte os valores se necessario
-    # por fim retorna um print com a sintaxe do java
+    # Verifica se a variavel existe
+    # e por fim retorna um print com a sintaxe do java
     def execute(self, executor):
+        identifier = self.content[1].value
         variables = executor.get()
-
-        value = self.content[1].value
-
-        variable = variables.get(value)
+        variable = variables.get(identifier)
 
         if not variable:
-            return f"Unknown variable '{value}'"
+            return f"Essa variavel não existe '{identifier}'"
 
-        if variable[1] == "string":
-            value = str(variable[0])
-        elif variable[1] == "integer":
-            value = int(variable[0])
-        elif variable[1] == "boolean":
-            value = variable[0]
-
-        return f'System.out.println({value});'
+        return f'System.out.println({identifier});'
 
 
 class SetStatement(Statement):
@@ -119,15 +111,6 @@ class SetStatement(Statement):
 
     def execute(self, executor):
         pass
-        # variables = executor.get()
-        #
-        # identifier = self.content[1].value
-        # type = variables.get(identifier)[1]
-        # value = self.content[3].value
-        #
-        # variable = variables[identifier] = (value, type)
-
-        # return f'{identifier} = {value};'
 
 
 class ReadStatement(Statement):
