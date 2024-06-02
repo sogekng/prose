@@ -65,7 +65,7 @@ def main():
         rendered_tokens = render_groups(token_groups)
         synthesize_statements(rendered_tokens)
 
-        pprint.pp(rendered_tokens)
+        # pprint.pp(rendered_tokens)
 
         print("Output:", output_path)
 
