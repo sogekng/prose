@@ -1,21 +1,7 @@
-create integer variable count 0;
-set count to 1;
+create integer variable count 10;
+create string variable leia "Hello world!";
+create boolean constant verdadeiro true;
 
+write leia;
 write count;
-
-if count > 0 then
-    write "Success!";
-end
-elif count == 1 then
-    write "Sucess?";
-end
-elif count == 2 then
-    write "Sucess?";
-end
-else then
-    write "Not success!";
-end
-
-do
-    set count to count - 1;
-while count > 0 end
+write verdadeiro;

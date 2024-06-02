@@ -1,9 +1,11 @@
 from lexer import Lexer
-import parsa
+from parsa import *
 import pprint
 import sys
 from os import path
 import subprocess
+
+from src.execute import Executor
 
 EXTENSION = "lang"
 
@@ -17,17 +19,17 @@ def print_(code):
     print()
 
     print("• [TOKEN GROUPS]")
-    token_groups = parsa.group_tokens(tokens)
+    token_groups = group_tokens(tokens)
     pprint.pp(token_groups)
     print()
 
     print("• [RENDERED TOKEN GROUPS]")
-    rendered_tokens = parsa.render_groups(token_groups)
+    rendered_tokens = render_groups(token_groups)
     pprint.pp(rendered_tokens)
     print()
 
     print("• [SYNTHESIZED GROUPS]")
-    parsa.synthesize_statements(rendered_tokens)
+    synthesize_statements(rendered_tokens)
     pprint.pp(rendered_tokens)
 
 
@@ -59,18 +61,31 @@ def main():
 
         lexer = Lexer()
         tokens = lexer.tokenize(code)
-        token_groups = parsa.group_tokens(tokens)
-        rendered_tokens = parsa.render_groups(token_groups)
-        parsa.synthesize_statements(rendered_tokens)
+        token_groups = group_tokens(tokens)
+        rendered_tokens = render_groups(token_groups)
+        synthesize_statements(rendered_tokens)
+
+        pprint.pp(rendered_tokens)
 
         print("Output:", output_path)
+
+        executor = Executor()
+
+        for statement in rendered_tokens:
+            executor.execute(statement)
+
+        print("Variaveis:")
+        pprint.pp(executor.variables)
+
+        java_code = executor.generate_java_code(rendered_tokens)
 
         with open(output_path, 'w') as output_file:
             # Preamble
             output_file.write(f"public class {program_name} {{\n")
             output_file.write("public static void main(String[] args) {\n")
 
-            output_file.write('System.out.printf("Amogus");\n')
+            # Código gerado dinamicamente
+            output_file.write(java_code)
 
             # Epilogue
             output_file.write("}}\n")
@@ -83,7 +98,7 @@ def main():
         # Executar o arquivo Java compilado
         execute_command = ["java", "-cp", path_dirname, program_name]
         result = subprocess.run(execute_command, check=True, capture_output=True, text=True)
-        print("Saída da execução do programa Java:\n")
+        print("Saída da execução do programa Java:")
         print(result.stdout)
 
     except FileNotFoundError:

@@ -9,45 +9,137 @@ class Statement:
     def validate_syntax(self) -> bool:
         return True
 
+    def get_attributes(self):
+        return {
+            "type": self.content[1].value,
+            "var_type": self.content[2].value,
+            "identifier": self.content[3].value,
+            "value": self.content[4].value if len(self.content) > 4 else ""
+        }
+
+    def execute(self, executor):
+        pass
+
+    def verify_variable(self, attributes, set_type, set_value):
+
+        # Verifica se o valor da variavel é None se for ele cria uma variavel sem valor
+        # Ex: boolean variavel;
+        # Depois verifica se é uma variavel com o tipo normal ou constant e retorna a atribuição do valor
+
+        if attributes["value"] == None:
+            if attributes["var_type"] == "variable":
+                return f'{set_type} {attributes["identifier"]};'
+            elif attributes["var_type"] == "constant":
+                return f'final {set_type} {attributes["identifier"]};'
+        else:
+            if attributes["var_type"] == "variable":
+                return f'{set_type} {attributes["identifier"]} = {set_value};'
+            elif attributes["var_type"] == "constant":
+                return f'final {set_type} {attributes["identifier"]} = {set_value};'
+
 
 class CreateStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.content) >= 4
-            and self.content[0].token_type == TokenType.CREATE
-            and self.content[1].token_type == TokenType.TYPE
-            and self.content[2].token_type == TokenType.VARTYPE
-            and self.content[3].token_type == TokenType.IDENTIFIER
-            and len(self.content) == 4 or self.content[4].token_type in LITERAL_TOKENS
+                len(self.content) >= 4
+                and self.content[0].token_type == TokenType.CREATE
+                and self.content[1].token_type == TokenType.TYPE
+                and self.content[2].token_type == TokenType.VARTYPE
+                and self.content[3].token_type == TokenType.IDENTIFIER
+                and (len(self.content) == 4 or self.content[4].token_type in LITERAL_TOKENS)
         )
+
+    def execute(self, executor):
+        attributes = self.get_attributes() # Puxa os atributos atuais da variavel
+
+        # Cria uma variavel no dicionario 'variables' inicializado no execute.py
+        executor.variables[attributes["identifier"]] = (attributes["value"]
+                                                        if attributes["value"] is not None
+                                                        else None, attributes["type"])
+
+        # Verifica os tipos das variaveis e retorna a sintaxe do java com a verificação de tipo de variavel
+        if attributes["type"] == "integer":
+            java_type = "int"
+            java_value = None if attributes["value"] == None else int(attributes["value"])
+
+            return self.verify_variable(attributes, java_type, java_value)
+
+        elif attributes["type"] == "string":
+            java_type = "String"
+            java_value = None if attributes["value"] == None else attributes["value"]
+
+            return self.verify_variable(attributes, java_type, java_value)
+
+        elif attributes["type"] == "boolean":
+            java_type = "boolean"
+            java_value = None if attributes["value"] == None else attributes["value"]
+
+            return self.verify_variable(attributes, java_type, java_value)
 
 
 class WriteStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.content) >= 2
-            and self.content[0].token_type == TokenType.WRITE
-            and self.content[1].token_type == TokenType.STRING or TokenType.IDENTIFIER
+                len(self.content) >= 2
+                and self.content[0].token_type == TokenType.WRITE
+                and (self.content[1].token_type == TokenType.STRING
+                     or self.content[1].token_type == TokenType.IDENTIFIER)
         )
+
+    # Verifica o tipo da variavel e converte os valores se necessario
+    # por fim retorna um print com a sintaxe do java
+    def execute(self, executor):
+        variables = executor.get()
+
+        value = self.content[1].value
+
+        variable = variables.get(value)
+
+        if not variable:
+            return f"Unknown variable '{value}'"
+
+        if variable[1] == "string":
+            value = str(variable[0])
+        elif variable[1] == "integer":
+            value = int(variable[0])
+        elif variable[1] == "boolean":
+            value = variable[0]
+
+        return f'System.out.println({value});'
 
 
 class SetStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.content) >= 4
-            and self.content[0].token_type == TokenType.SET
-            and self.content[1].token_type == TokenType.IDENTIFIER
-            and self.content[2].token_type == TokenType.TO
+                len(self.content) >= 4
+                and self.content[0].token_type == TokenType.SET
+                and self.content[1].token_type == TokenType.IDENTIFIER
+                and self.content[2].token_type == TokenType.TO
         )
+
+    def execute(self, executor):
+        pass
+        # variables = executor.get()
+        #
+        # identifier = self.content[1].value
+        # type = variables.get(identifier)[1]
+        # value = self.content[3].value
+        #
+        # variable = variables[identifier] = (value, type)
+
+        # return f'{identifier} = {value};'
 
 
 class ReadStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.content) == 2 and
-            self.content[0].token_type == TokenType.READ and
-            self.content[1].token_type == TokenType.IDENTIFIER
+                len(self.content) == 2 and
+                self.content[0].token_type == TokenType.READ and
+                self.content[1].token_type == TokenType.IDENTIFIER
         )
+
+    def execute(self, executor):
+        pass
 
 
 @dataclass
@@ -58,6 +150,9 @@ class StructureGroup:
 
     def __repr__(self):
         return f"StructureGroup(type={self.structure_type}, condition={self.condition}, content={self.content})"
+
+    def execute(self, executor):
+        pass
 
 
 def find_next_token(tokens, token_type, offset):
