@@ -1,7 +1,10 @@
 create integer variable count 10;
-create string variable leia "Hello world!";
 create boolean constant verdadeiro true;
+create string variable ler;
 
-write leia;
+set count to 20;
+set ler to "leia isto fi"
+
 write count;
 write verdadeiro;
+write ler;

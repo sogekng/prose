@@ -9,33 +9,11 @@ class Statement:
     def validate_syntax(self) -> bool:
         return True
 
-    def get_attributes(self):
-        return {
-            "type": self.content[1].value,
-            "var_type": self.content[2].value,
-            "identifier": self.content[3].value,
-            "value": self.content[4].value if len(self.content) > 4 else ""
-        }
-
     def execute(self, executor):
         pass
 
     def verify_variable(self, attributes, set_type, set_value):
-
-        # Verifica se o valor da variavel é None se for ele cria uma variavel sem valor
-        # Ex: boolean variavel;
-        # Depois verifica se é uma variavel com o tipo normal ou constant e retorna a atribuição do valor
-
-        if attributes["value"] == None:
-            if attributes["var_type"] == "variable":
-                return f'{set_type} {attributes["identifier"]};'
-            elif attributes["var_type"] == "constant":
-                return f'final {set_type} {attributes["identifier"]};'
-        else:
-            if attributes["var_type"] == "variable":
-                return f'{set_type} {attributes["identifier"]} = {set_value};'
-            elif attributes["var_type"] == "constant":
-                return f'final {set_type} {attributes["identifier"]} = {set_value};'
+        pass
 
 
 class CreateStatement(Statement):
@@ -50,32 +28,54 @@ class CreateStatement(Statement):
         )
 
     def execute(self, executor):
-        attributes = self.get_attributes() # Puxa os atributos atuais da variavel
+
+        type_value = self.content[1].value
+        var_type = self.content[2].value
+        identifier = self.content[3].value
+        value = self.content[4].value if len(self.content) > 4 else None
 
         # Cria uma variavel no dicionario 'variables' inicializado no execute.py
-        executor.variables[attributes["identifier"]] = (attributes["type"],
-                                                        attributes["var_type"],
-                                                        attributes["value"]
-                                                        if attributes["value"] is not None else None)
+        executor.variables[identifier] = [type_value, var_type, value]
 
         # Verifica os tipos das variaveis e retorna a sintaxe do java com a verificação de tipo de variavel
-        if attributes["type"] == "integer":
+        if type_value == "integer":
             java_type = "int"
-            java_value = None if attributes["value"] == None else int(attributes["value"])
+            java_value = None if value is None else int(value)
 
-            return self.verify_variable(attributes, java_type, java_value)
+            return self.verify_variable([identifier, type_value, var_type, value], java_type, java_value)
 
-        elif attributes["type"] == "string":
+        elif type_value == "string":
             java_type = "String"
-            java_value = None if attributes["value"] == None else attributes["value"]
+            java_value = None if value is None else value
 
-            return self.verify_variable(attributes, java_type, java_value)
+            return self.verify_variable([identifier, type_value, var_type, value], java_type, java_value)
 
-        elif attributes["type"] == "boolean":
+        elif type_value == "boolean":
             java_type = "boolean"
-            java_value = None if attributes["value"] == None else attributes["value"]
+            java_value = None if value is None else value
 
-            return self.verify_variable(attributes, java_type, java_value)
+            return self.verify_variable([identifier, type_value, var_type, value], java_type, java_value)
+
+    def verify_variable(self, variable, set_type, set_value):
+
+        # Verifica se o valor da variavel é None se for ele cria uma variavel sem valor
+        # Ex: boolean variavel;
+        # Depois verifica se é uma variavel com o tipo normal ou constant e retorna a atribuição do valor
+
+        identifier = variable[0]
+        var_type = variable[2]
+        value = variable[3]
+
+        if value == None:
+            if var_type == "variable":
+                return f'{set_type} {identifier};'
+            elif var_type == "constant":
+                return f'final {set_type} {identifier};'
+        else:
+            if var_type == "variable":
+                return f'{set_type} {identifier} = {set_value};'
+            elif var_type == "constant":
+                return f'final {set_type} {identifier} = {set_value};'
 
 
 class WriteStatement(Statement):
@@ -91,8 +91,7 @@ class WriteStatement(Statement):
     # e por fim retorna um print com a sintaxe do java
     def execute(self, executor):
         identifier = self.content[1].value
-        variables = executor.get()
-        variable = variables.get(identifier)
+        variable = executor.get().get(identifier)
 
         if not variable:
             return f"Essa variavel não existe '{identifier}'"
@@ -110,7 +109,18 @@ class SetStatement(Statement):
         )
 
     def execute(self, executor):
-        pass
+        identifier = self.content[1].value
+
+        variables = executor.get()
+        variable = variables.get(identifier)
+
+        type = variable[0]
+        var_type = variable[1]
+        new_value = self.content[3].value
+
+        variables[identifier] = [type, var_type, new_value]
+
+        return f"{identifier} = {new_value};"
 
 
 class ReadStatement(Statement):

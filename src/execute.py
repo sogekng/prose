@@ -12,5 +12,7 @@ class Executor:
     def generate_java_code(self, statements):
         java_code = []
         for statement in statements:
-            java_code.append(statement.execute(self))
+            code = statement.execute(self)
+            if code is not None:
+                java_code.append(code)
         return "\n".join(java_code)
