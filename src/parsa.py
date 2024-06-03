@@ -132,7 +132,22 @@ class ReadStatement(Statement):
         )
 
     def execute(self, executor):
-        pass
+        identifier = self.content[1].value
+
+        variables = executor.get()
+        variable = variables.get(identifier)
+
+        if identifier not in variables:
+            return f"Essa variável não existe: '{identifier}'"
+
+        type_value = variable[0]
+
+        if type_value == "integer":
+            return f'{identifier} = Integer.parseInt(scanner.nextLine());'
+        elif type_value == "string":
+            return f'{identifier} = scanner.nextLine();'
+        elif type_value == "boolean":
+            return f'{identifier} = Boolean.parseBoolean(scanner.nextLine());'
 
 
 @dataclass

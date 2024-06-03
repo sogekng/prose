@@ -81,13 +81,16 @@ def main():
 
         with open(output_path, 'w') as output_file:
             # Preamble
+            output_file.write(f"import java.util.Scanner;\n\n")
             output_file.write(f"public class {program_name} {{\n")
             output_file.write("public static void main(String[] args) {\n")
+            output_file.write("Scanner scanner = new Scanner(System.in);\n")
 
             # Código gerado dinamicamente
             output_file.write(java_code)
 
             # Epilogue
+            output_file.write("\nscanner.close();\n")
             output_file.write("}}\n")
 
         # Compilar o arquivo Java
@@ -107,8 +110,9 @@ def main():
         print(f"Erro ao compilar ou executar o arquivo Java: {e}")
         print(f"Saída do erro: {e.output}")
     except Exception as e:
-        raise Exception(e)
-        # print(f"Ocorreu um erro ao processar o arquivo: {e}")
+        print(f"Ocorreu um erro ao processar o arquivo: {e}")
+        raise e
+
 
 if __name__ == "__main__":
     main()

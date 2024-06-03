@@ -3,7 +3,9 @@ create boolean constant verdadeiro true;
 create string variable ler;
 
 set count to 20;
-set ler to "leia isto fi"
+# set ler to "leia isto fi"
+
+read ler;
 
 write count;
 write verdadeiro;
