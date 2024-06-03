@@ -1,12 +1,7 @@
-create integer variable count 10;
-create boolean constant verdadeiro true;
-create string variable ler;
+create integer variable count;
+create boolean variable verdadeiro;
 
-set count to 20;
-set ler to "leia isto fi"
+set verdadeiro to true;
+set count to 10;
 
 write count;
-write verdadeiro;
-write ler;
-write "Sucesso!";
-write 10;

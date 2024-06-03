@@ -34,10 +34,8 @@ class CreateStatement(Statement):
         identifier = self.content[3].value
         value = self.content[4].value if len(self.content) > 4 else None
 
-        # Cria uma variavel no dicionario 'variables' inicializado no execute.py
         executor.variables[identifier] = [type_value, var_type, value]
 
-        # Verifica os tipos das variaveis e retorna a sintaxe do java com a verificação de tipo de variavel
         if type_value == "integer":
             java_type = "int"
             java_value = None if value is None else int(value)
@@ -83,16 +81,21 @@ class WriteStatement(Statement):
         return (
                 len(self.content) >= 2
                 and self.content[0].token_type == TokenType.WRITE
-                and (self.content[1].token_type in LITERAL_TOKENS
-                     or self.content[1].token_type == TokenType.IDENTIFIER)
         )
 
-    # Verifica se a variavel existe
-    # e por fim retorna um print com a sintaxe do java
     def execute(self, executor):
         identifier = self.content[1].value
 
-        return f'System.out.println({identifier});'
+        if len(self.content) > 2:
+            expression_tokens = self.content[1:]
+
+            variables = executor.get()
+
+            new_value = evaluate_expression(expression_tokens, variables)
+
+            return f'System.out.println({new_value});'
+        else:
+            return f'System.out.println({identifier});'
 
 
 class SetStatement(Statement):
@@ -106,17 +109,48 @@ class SetStatement(Statement):
 
     def execute(self, executor):
         identifier = self.content[1].value
+        second_identifier = self.content[3].token_type
 
-        variables = executor.get()
-        variable = variables.get(identifier)
+        if len(self.content) >= 5:
+            expression_tokens = self.content[3:]
 
-        type = variable[0]
-        var_type = variable[1]
-        new_value = self.content[3].value
+            expression = ' '.join(str(token.value) for token in self.content[3:])
 
-        variables[identifier] = [type, var_type, new_value]
+            variables = executor.get()
+            variable = variables.get(identifier)
+            type_value, var_type, value = variable
 
-        return f"{identifier} = {new_value};"
+            evaluate_expression(expression_tokens, variables)
+            new_value = evaluate_expression(expression_tokens, variables)
+
+            variables[identifier] = [type_value, var_type, f'{new_value}']
+
+            return f"{identifier} = {expression};"
+        elif second_identifier == TokenType.IDENTIFIER:
+            second_identifier = self.content[3].value
+
+            variables = executor.get()
+
+            first_variable = variables.get(identifier)
+            type_value, var_type, value = first_variable
+
+            second_variable = variables.get(second_identifier)
+            new_value = second_variable[2]
+
+            variables[identifier] = [type_value, var_type, f'{new_value}']
+
+            return f"{identifier} = {second_identifier};"
+        else:
+            identifier = self.content[1].value
+            new_value = self.content[3].value
+
+            variables = executor.get()
+            variable = variables.get(identifier)
+            type_value, var_type, value = variable
+
+            variables[identifier] = [type_value, var_type, f'{new_value}']
+
+            return f"{identifier} = {new_value};"
 
 
 class ReadStatement(Statement):
@@ -156,7 +190,47 @@ class StructureGroup:
         return f"StructureGroup(type={self.structure_type}, condition={self.condition}, content={self.content})"
 
     def execute(self, executor):
-        pass
+        structure = self.structure_type
+
+        content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
+
+        if structure == TokenType.IF:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"if ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.ELIF:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"else if ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.ELSE:
+            return f"else {{\n{content_code}\n}}"
+        elif structure == TokenType.WHILE:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"while ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.DO:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"do {{\n{content_code}\n}} while ({condition_code});"
+
+
+def evaluate_expression(tokens, variables):
+    def get_value(token):
+        if token.token_type == TokenType.IDENTIFIER:
+            if token.value in variables:
+                return variables[token.value][2]  # Retorna o valor da variável
+            else:
+                raise ValueError(f"Undefined variable: {token.value}")
+        return token.value
+
+    # Constrói a expressão a partir dos valores dos tokens
+    expression = ''.join(str(get_value(token)) for token in tokens)
+
+    try:
+        result = eval(expression)
+        if isinstance(result, float):
+            return int(result)
+        return result
+    except SyntaxError as e:
+        raise ValueError(f"Syntax error in expression: {expression}") from e
+    except Exception as e:
+        raise ValueError(f"Error evaluating expression: {expression}") from e
 
 
 def find_next_token(tokens, token_type, offset):
