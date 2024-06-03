@@ -4,4 +4,9 @@ create boolean variable verdadeiro;
 set verdadeiro to true;
 set count to 10;
 
-write count;
+while count != 11 do
+    if count == 10 then
+        write count;
+        set count to count + 1;
+    end
+end
