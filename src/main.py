@@ -74,8 +74,9 @@ def main():
         for statement in rendered_tokens:
             executor.execute(statement)
 
-        print("Variaveis:")
+        print("Variaveis:\n")
         pprint.pp(executor.variables)
+        print()
 
         java_code = executor.generate_java_code(rendered_tokens)
 
@@ -101,7 +102,7 @@ def main():
         # Executar o arquivo Java compilado
         execute_command = ["java", "-cp", path_dirname, program_name]
         result = subprocess.run(execute_command, check=True, capture_output=True, text=True)
-        print("Saída da execução do programa Java:")
+        print("Saída da execução do programa Java:\n")
         print(result.stdout)
 
     except FileNotFoundError:

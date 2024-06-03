@@ -83,7 +83,7 @@ class WriteStatement(Statement):
         return (
                 len(self.content) >= 2
                 and self.content[0].token_type == TokenType.WRITE
-                and (self.content[1].token_type == TokenType.STRING
+                and (self.content[1].token_type in LITERAL_TOKENS
                      or self.content[1].token_type == TokenType.IDENTIFIER)
         )
 
@@ -91,10 +91,6 @@ class WriteStatement(Statement):
     # e por fim retorna um print com a sintaxe do java
     def execute(self, executor):
         identifier = self.content[1].value
-        variable = executor.get().get(identifier)
-
-        if not variable:
-            return f"Essa variavel não existe '{identifier}'"
 
         return f'System.out.println({identifier});'
 

@@ -7,9 +7,10 @@ int count = 10;
 final boolean verdadeiro = true;
 String ler;
 count = 20;
-ler = scanner.nextLine();
-System.out.println(count);
+ler = "leia isto fi";
 System.out.println(verdadeiro);
 System.out.println(ler);
+System.out.println("Sucesso!");
+System.out.println(10);
 scanner.close();
 }}
