@@ -13,25 +13,24 @@ class StructureGroup:
         return f"StructureGroup(type={self.structure_type}, condition={self.condition}, content={self.content})"
 
     def execute(self, executor):
-        pass
         structure = self.structure_type
-        #
-        # content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
-        #
-        # if structure == TokenType.IF:
-        #     condition_code = " ".join([token.value for token in self.condition])
-        #     return f"if ({condition_code}) {{\n{content_code}\n}}"
-        # elif structure == TokenType.ELIF:
-        #     condition_code = " ".join([token.value for token in self.condition])
-        #     return f"else if ({condition_code}) {{\n{content_code}\n}}"
-        # elif structure == TokenType.ELSE:
-        #     return f"else {{\n{content_code}\n}}"
-        # elif structure == TokenType.WHILE:
-        #     condition_code = " ".join([token.value for token in self.condition])
-        #     return f"while ({condition_code}) {{\n{content_code}\n}}"
-        # elif structure == TokenType.DO:
-        #     condition_code = " ".join([token.value for token in self.condition])
-        #     return f"do {{\n{content_code}\n}} while ({condition_code});"
+
+        content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
+
+        if structure == TokenType.IF:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"if ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.ELIF:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"else if ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.ELSE:
+            return f"else {{\n{content_code}\n}}"
+        elif structure == TokenType.WHILE:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"while ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.DO:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"do {{\n{content_code}\n}} while ({condition_code});"
 
 
 @dataclass
@@ -238,27 +237,6 @@ class WhileStructureGroup(StructureGroup):
             return f"while ({condition}) {{\n{content_code}\n}}"
 
 
-class DoWhileStructureGroup(StructureGroup):
-    def __repr__(self):
-        return f"DoWhileStructureGroup(type={self.structure_type}, condition={self.condition}, content={self.content})"
-
-    def execute(self, executor):
-        global is_value, content_code
-
-        is_value = True
-        variables = executor.get()
-        condition = " ".join([token.value for token in self.condition])
-
-        while is_value:
-            if is_value:
-                content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
-                continue
-
-            is_value = evaluate_condition(condition, find_variables_in_condition(variables, condition), executor)
-
-            return f"do {{\n{content_code}\n}} while ({condition});"
-
-
 def find_variables_in_condition(variables, condition):
     pattern = re.compile(r'\b\w+\b')
 
@@ -325,6 +303,8 @@ def find_matching_end(tokens, offset):
     for i in range(offset, len(tokens)):
         if tokens[i].token_type in STRUCTURE_TOKENS:
             pair_count += 1
+        elif tokens[i].token_type == TokenType.WHILE:
+            pair_count += 1
         elif tokens[i].token_type == TokenType.END:
             pair_count -= 1
 
@@ -355,39 +335,36 @@ def group_tokens(tokens):
         token = tokens[i]
 
         if token.token_type == TokenType.DO:
-            stack.append(DoWhileStructureGroup(
+            stack.append(StructureGroup(
                 structure_type=TokenType.DO,
                 condition=[],
                 content=[]
             ))
 
+        elif token.token_type == TokenType.WHILE and stack and stack[-1].structure_type == TokenType.DO:
             i += 1
-
-            while tokens[i].token_type != TokenType.WHILE:
-                stack[-1].content.append(tokens[i])
-                i += 1
-
-        elif token.token_type == TokenType.WHILE:
-            stack.append(WhileStructureGroup(
-                structure_type=token.token_type,
-                condition=[],
-                content=[]
-            ))
-
-            i += 1
-
-            condition_delimiter = TokenType.DO if token.token_type == TokenType.WHILE else TokenType.THEN
-
-            while tokens[i].token_type != condition_delimiter:
+            while tokens[i].token_type != TokenType.END:
                 stack[-1].condition.append(tokens[i])
                 i += 1
+            new_group = stack.pop()
+            if stack:
+                stack[-1].content.append(new_group)
+            else:
+                groups.append(new_group)
 
         elif token.token_type in STRUCTURE_TOKENS:
-            stack.append(StructureGroup(
-                structure_type=token.token_type,
-                condition=[],
-                content=[]
-            ))
+            if token.token_type == TokenType.WHILE:
+                stack.append(WhileStructureGroup(
+                    structure_type=token.token_type,
+                    condition=[],
+                    content=[]
+                ))
+            else:
+                stack.append(StructureGroup(
+                    structure_type=token.token_type,
+                    condition=[],
+                    content=[]
+                ))
 
             i += 1
 
@@ -404,9 +381,6 @@ def group_tokens(tokens):
                     stack[-1].content.append(new_group)
                 else:
                     groups.append(new_group)
-
-        elif stack and stack[-1].structure_type == TokenType.DO:
-            stack[-1].condition.append(token)
 
         elif stack:
             stack[-1].content.append(token)
@@ -430,7 +404,11 @@ def render_groups(items):
     while i < len(items):
         item = items[i]
 
-        if type(item) in [StructureGroup, DoWhileStructureGroup, WhileStructureGroup]:
+        if type(item) == StructureGroup:
+            item.content = render_groups(item.content)
+            groups.append(item)
+            i += 1
+        elif type(item) == WhileStructureGroup:
             item.content = render_groups(item.content)
             groups.append(item)
             i += 1
@@ -468,7 +446,9 @@ def synthesize_statements(items):
     while i < len(items):
         item = items[i]
 
-        if type(item) in [StructureGroup, DoWhileStructureGroup, WhileStructureGroup]:
+        if type(item) == StructureGroup:
+            synthesize_statements(item.content)
+        elif type(item) == WhileStructureGroup:
             synthesize_statements(item.content)
         elif type(item) == list:
             if len(item) == 0:
