@@ -1,5 +1,5 @@
 create integer variable count 0;
-create boolean variable verdadeiro true;
+#create boolean variable verdadeiro true;
 
 #if count == 10 then
 #    write "count é igual a 10";
