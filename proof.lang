@@ -1,12 +1,11 @@
-create integer variable count;
-create boolean variable verdadeiro;
+create integer variable count 0;
+create boolean variable verdadeiro true;
 
-set verdadeiro to true;
-set count to 10;
+#if count == 10 then
+#    write "count é igual a 10";
+#end
 
-while count != 11 do
-    if count == 10 then
-        write count;
-        set count to count + 1;
-    end
+while count < 10 do
+    set count to count + 1;
+    write count;
 end

@@ -65,7 +65,7 @@ def main():
         rendered_tokens = render_groups(token_groups)
         synthesize_statements(rendered_tokens)
 
-        # pprint.pp(rendered_tokens)
+        pprint.pp(rendered_tokens)
 
         print("Output:", output_path)
 
@@ -73,10 +73,6 @@ def main():
 
         for statement in rendered_tokens:
             executor.execute(statement)
-
-        print("Variaveis:\n")
-        pprint.pp(executor.variables)
-        print()
 
         java_code = executor.generate_java_code(rendered_tokens)
 
@@ -94,7 +90,6 @@ def main():
             output_file.write("\nscanner.close();\n")
             output_file.write("}}\n")
 
-        # Compilar o arquivo Java
         compile_command = ["javac", output_path]
         subprocess.run(compile_command, check=True)
         print(f"Arquivo {output_path} compilado com sucesso.")
@@ -102,6 +97,11 @@ def main():
         # Executar o arquivo Java compilado
         execute_command = ["java", "-cp", path_dirname, program_name]
         result = subprocess.run(execute_command, check=True, capture_output=True, text=True)
+
+        print("Variaveis:\n")
+        pprint.pp(executor.variables)
+        print()
+
         print("Saída da execução do programa Java:\n")
         print(result.stdout)
 

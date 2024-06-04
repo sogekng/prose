@@ -48,7 +48,7 @@ class TokenType(Enum):
     IDENTIFIER = auto()
 
 
-STRUCTURE_TOKENS = [TokenType.IF, TokenType.ELIF, TokenType.ELSE, TokenType.WHILE, TokenType.DO]
+STRUCTURE_TOKENS = [TokenType.IF, TokenType.ELIF, TokenType.ELSE, TokenType.DO, TokenType.WHILE]
 LITERAL_TOKENS = [TokenType.BOOLEAN, TokenType.NUMBER, TokenType.STRING]
 
 

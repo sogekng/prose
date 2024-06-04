@@ -1,5 +1,36 @@
 from util.token import TokenType, STRUCTURE_TOKENS, LITERAL_TOKENS
 from dataclasses import dataclass
+import re
+
+
+@dataclass
+class StructureGroup:
+    structure_type: TokenType
+    condition: list
+    content: list
+
+    def __repr__(self):
+        return f"StructureGroup(type={self.structure_type}, condition={self.condition}, content={self.content})"
+
+    def execute(self, executor):
+        structure = self.structure_type
+
+        content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
+
+        if structure == TokenType.IF:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"if ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.ELIF:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"else if ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.ELSE:
+            return f"else {{\n{content_code}\n}}"
+        elif structure == TokenType.WHILE:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"while ({condition_code}) {{\n{content_code}\n}}"
+        elif structure == TokenType.DO:
+            condition_code = " ".join([token.value for token in self.condition])
+            return f"do {{\n{content_code}\n}} while ({condition_code});"
 
 
 @dataclass
@@ -120,12 +151,17 @@ class SetStatement(Statement):
             variable = variables.get(identifier)
             type_value, var_type, value = variable
 
-            evaluate_expression(expression_tokens, variables)
             new_value = evaluate_expression(expression_tokens, variables)
 
-            variables[identifier] = [type_value, var_type, f'{new_value}']
+            if type_value == "integer":
 
-            return f"{identifier} = {expression};"
+                variables[identifier] = [type_value, var_type, f'{new_value}']
+
+                return f"{identifier} = {expression};"
+            else:
+                variables[identifier] = [type_value, var_type, f'{new_value}']
+
+                return f"{identifier} = {expression};"
         elif second_identifier == TokenType.IDENTIFIER:
             second_identifier = self.content[3].value
 
@@ -180,46 +216,66 @@ class ReadStatement(Statement):
             return f'{identifier} = Boolean.parseBoolean(scanner.nextLine());'
 
 
-@dataclass
-class StructureGroup:
-    structure_type: TokenType
-    condition: list
-    content: list
-
+class WhileStructureGroup(StructureGroup):
     def __repr__(self):
-        return f"StructureGroup(type={self.structure_type}, condition={self.condition}, content={self.content})"
+        return f"WhileStructureGroup(type={self.structure_type}, condition={self.condition}, content={self.content})"
 
     def execute(self, executor):
-        structure = self.structure_type
+        global is_value, content_code
 
-        content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
+        is_value = True
+        variables = executor.get()
+        condition = " ".join([token.value for token in self.condition])
 
-        if structure == TokenType.IF:
-            condition_code = " ".join([token.value for token in self.condition])
-            return f"if ({condition_code}) {{\n{content_code}\n}}"
-        elif structure == TokenType.ELIF:
-            condition_code = " ".join([token.value for token in self.condition])
-            return f"else if ({condition_code}) {{\n{content_code}\n}}"
-        elif structure == TokenType.ELSE:
-            return f"else {{\n{content_code}\n}}"
-        elif structure == TokenType.WHILE:
-            condition_code = " ".join([token.value for token in self.condition])
-            return f"while ({condition_code}) {{\n{content_code}\n}}"
-        elif structure == TokenType.DO:
-            condition_code = " ".join([token.value for token in self.condition])
-            return f"do {{\n{content_code}\n}} while ({condition_code});"
+        while is_value:
+            is_value = evaluate_condition(condition, find_variables_in_condition(variables, condition), executor)
+
+            if is_value:
+                content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
+                continue
+
+            return f"while ({condition}) {{\n{content_code}\n}}"
+
+
+def find_variables_in_condition(variables, condition):
+    pattern = re.compile(r'\b\w+\b')
+
+    potential_vars = pattern.findall(condition)
+
+    actual_vars = [var for var in potential_vars if var in variables]
+
+    return actual_vars
+
+
+def evaluate_condition(condition, variables, executor):
+    try:
+        identifiers = re.findall(r'\b\w+\b', condition)
+
+        for i, var in enumerate(variables):
+            for j, identifier in enumerate(identifiers):
+                if var == identifiers[j]:
+                    variable = variables[i]
+                    value = executor.get().get(identifier)[2]
+                    # value = identifiers[j + 1]
+
+                    condition = condition.replace(variable, value)
+
+        result = eval(condition)
+        return result
+    except Exception as e:
+        print(f"Erro na condição: {e}")
+        return False
 
 
 def evaluate_expression(tokens, variables):
     def get_value(token):
         if token.token_type == TokenType.IDENTIFIER:
             if token.value in variables:
-                return variables[token.value][2]  # Retorna o valor da variável
+                return variables[token.value][2]
             else:
                 raise ValueError(f"Undefined variable: {token.value}")
         return token.value
 
-    # Constrói a expressão a partir dos valores dos tokens
     expression = ''.join(str(get_value(token)) for token in tokens)
 
     try:
@@ -246,6 +302,8 @@ def find_matching_end(tokens, offset):
 
     for i in range(offset, len(tokens)):
         if tokens[i].token_type in STRUCTURE_TOKENS:
+            pair_count += 1
+        elif tokens[i].token_type == TokenType.WHILE:
             pair_count += 1
         elif tokens[i].token_type == TokenType.END:
             pair_count -= 1
@@ -295,11 +353,18 @@ def group_tokens(tokens):
                 groups.append(new_group)
 
         elif token.token_type in STRUCTURE_TOKENS:
-            stack.append(StructureGroup(
-                structure_type=token.token_type,
-                condition=[],
-                content=[]
-            ))
+            if token.token_type == TokenType.WHILE:
+                stack.append(WhileStructureGroup(
+                    structure_type=token.token_type,
+                    condition=[],
+                    content=[]
+                ))
+            else:
+                stack.append(StructureGroup(
+                    structure_type=token.token_type,
+                    condition=[],
+                    content=[]
+                ))
 
             i += 1
 
@@ -343,6 +408,10 @@ def render_groups(items):
             item.content = render_groups(item.content)
             groups.append(item)
             i += 1
+        elif type(item) == WhileStructureGroup:
+            item.content = render_groups(item.content)
+            groups.append(item)
+            i += 1
         else:
             grouped = group_statement(items, i)
             groups.append(grouped)
@@ -378,6 +447,8 @@ def synthesize_statements(items):
         item = items[i]
 
         if type(item) == StructureGroup:
+            synthesize_statements(item.content)
+        elif type(item) == WhileStructureGroup:
             synthesize_statements(item.content)
         elif type(item) == list:
             if len(item) == 0:
