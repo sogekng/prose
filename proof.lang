@@ -1,11 +1,13 @@
 create integer variable count 0;
+create boolean variable verdadeiro;
 create string variable mostrar;
 
-while count < 10 do
+set verdadeiro to true;
+set mostrar to "resultado: ";
+
+
+do
     set count to count + 1;
     write count;
-end
-
-set mostrar to "O resultado e: ";
-
-write mostrar + count;
+    set verdadeiro to false;
+while count < 10 and verdadeiro == true end

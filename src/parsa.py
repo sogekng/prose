@@ -88,13 +88,12 @@ class CreateStatement(Statement):
 
     def verify_variable(self, variable, set_type, set_value):
 
-        # Verifica se o valor da variavel é None se for ele cria uma variavel sem valor
-        # Ex: boolean variavel;
-        # Depois verifica se é uma variavel com o tipo normal ou constant e retorna a atribuição do valor
-
         identifier = variable[0]
         var_type = variable[2]
         value = variable[3]
+
+        if type(set_value) == str:
+            set_value = set_value.replace('True', 'true').replace('False', 'false')
 
         if value == None:
             if var_type == "variable":
@@ -120,9 +119,15 @@ class WriteStatement(Statement):
             expression_tokens = self.content[1:]
             variables = executor.get()
             new_value = evaluate_expression(expression_tokens, variables)
+
+            new_value = (new_value
+                         .replace('True', 'true')
+                         .replace('False', 'false'))
+
             return f'System.out.println({new_value});'
         else:
             identifier = self.content[1].value
+
             return f'System.out.println({identifier});'
 
 
@@ -150,7 +155,11 @@ class SetStatement(Statement):
 
             new_value = evaluate_expression(expression_tokens, variables)
 
-            variables[identifier] = [type_value, var_type, f'{eval(new_value)}']
+            variables[identifier] = [type_value,
+                                     var_type,
+                                     f'{eval(new_value
+                                             .replace('true', 'True')
+                                             .replace('false', 'False'))}']
 
             return f"{identifier} = {expression};"
         elif second_identifier == TokenType.IDENTIFIER:
@@ -164,7 +173,9 @@ class SetStatement(Statement):
             second_variable = variables.get(second_identifier)
             new_value = second_variable[2]
 
-            variables[identifier] = [type_value, var_type, f'{new_value}']
+            variables[identifier] = [type_value,
+                                     var_type,
+                                     f'{new_value.replace('true', 'True').replace('false', 'False')}']
 
             return f"{identifier} = {second_identifier};"
         else:
@@ -175,7 +186,13 @@ class SetStatement(Statement):
             variable = variables.get(identifier)
             type_value, var_type, value = variable
 
-            variables[identifier] = [type_value, var_type, f'{new_value}']
+            variables[identifier] = [type_value,
+                                     var_type,
+                                     f'{new_value.replace('true', 'True').replace('false', 'False')}']
+
+            new_value = (new_value
+                         .replace('True', 'true')
+                         .replace('False', 'false'))
 
             return f"{identifier} = {new_value};"
 
@@ -218,12 +235,23 @@ class WhileStructureGroup(StructureGroup):
         variables = executor.get()
         condition = " ".join([token.value for token in self.condition])
 
+        condition = (condition
+                     .replace('true', 'True')
+                     .replace('false', 'False'))
+
         while is_value:
             is_value = evaluate_condition(condition, find_variables_in_condition(variables, condition), executor)
 
             if is_value:
                 content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
                 continue
+
+            condition = ((separate_conditions_with_parentheses(condition))
+                         .replace('True', 'true')
+                         .replace('False', 'false'))
+            content_code = (content_code
+                            .replace('True', 'true')
+                            .replace('False', 'false'))
 
             return f"while ({condition}) {{\n{content_code}\n}}"
 
@@ -239,12 +267,23 @@ class DoWhileStructureGroup(StructureGroup):
         variables = executor.get()
         condition = " ".join([token.value for token in self.condition])
 
+        condition = (condition
+                     .replace('true', 'True')
+                     .replace('false', 'False'))
+
         while is_value:
             is_value = evaluate_condition(condition, find_variables_in_condition(variables, condition), executor)
 
             if is_value:
                 content_code = "\n".join([stmt.execute(executor) for stmt in self.content])
                 continue
+
+            condition = ((separate_conditions_with_parentheses(condition))
+                         .replace('True', 'true')
+                         .replace('False', 'false'))
+            content_code = (content_code
+                            .replace('True', 'true')
+                            .replace('False', 'false'))
 
             return f"do {{\n{content_code}\n}} while ({condition});"
 
@@ -258,6 +297,26 @@ class IfStructureGroup(StructureGroup):
 
         condition_code = " ".join([token.value for token in self.condition])
         return f"if ({condition_code}) {{\n{content_code}\n}}"
+
+
+def separate_conditions_with_parentheses(string):
+    string = string.lower()
+    logical_operators = re.compile(r'\s+(and|or)\s+')
+    parts = logical_operators.split(string)
+    result_parts = []
+
+    for part in parts:
+        part = part.strip()
+        if part == 'and':
+            result_parts.append('&&')
+        elif part == 'or':
+            result_parts.append('||')
+        else:
+            result_parts.append(f"({part})")
+
+    result = ' '.join(result_parts)
+
+    return result
 
 
 def find_variables_in_condition(variables, condition):
@@ -279,8 +338,8 @@ def evaluate_condition(condition, variables, executor):
                 if var == identifiers[j]:
                     variable = variables[i]
                     value = executor.get().get(identifier)[2]
-                    value = eval(value)
-                    # value = identifiers[j + 1]
+
+                    value = value.replace('true', 'True').replace('false', 'False')
 
                     condition = condition.replace(variable, str(value))
 
