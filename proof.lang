@@ -1,18 +1,11 @@
 create integer variable count 0;
 create string variable mostrar;
 
-set count to 10;
+while count < 10 do
+    set count to count + 1;
+    write count;
+end
 
-set mostrar to "a";
+set mostrar to "O resultado e: ";
 
-write mostrar;
-write "O resultado e: " + mostrar;
-
-#do
-#    set count to count + 1;
-#    write count;
-#while count < 10 end
-
-#if count == 10 then
-#    write "count e igual a 10";
-#end
+write mostrar + count;

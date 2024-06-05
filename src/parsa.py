@@ -150,15 +150,9 @@ class SetStatement(Statement):
 
             new_value = evaluate_expression(expression_tokens, variables)
 
-            if type_value == "integer":
+            variables[identifier] = [type_value, var_type, f'{eval(new_value)}']
 
-                variables[identifier] = [type_value, var_type, f'{new_value}']
-
-                return f"{identifier} = {expression};"
-            else:
-                variables[identifier] = [type_value, var_type, f'{new_value}']
-
-                return f"{identifier} = {expression};"
+            return f"{identifier} = {expression};"
         elif second_identifier == TokenType.IDENTIFIER:
             second_identifier = self.content[3].value
 
@@ -285,9 +279,10 @@ def evaluate_condition(condition, variables, executor):
                 if var == identifiers[j]:
                     variable = variables[i]
                     value = executor.get().get(identifier)[2]
+                    value = eval(value)
                     # value = identifiers[j + 1]
 
-                    condition = condition.replace(variable, value)
+                    condition = condition.replace(variable, str(value))
 
         result = eval(condition)
         return result
