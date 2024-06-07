@@ -63,7 +63,7 @@ def main():
         java_code = "\n".join(lines)
 
         print("Variaveis:\n")
-        pprint.pp(varbank._bank)
+        pprint.pp(varbank.scopes)
         print()
 
         with open(output_path, 'w') as output_file:

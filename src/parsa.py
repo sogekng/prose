@@ -1,13 +1,161 @@
 from dataclasses import dataclass
-import re
+import sys
 
-from util.token import TokenType, STRUCTURE_TOKENS, LITERAL_TOKENS, INVALID_EXPRESSION_TOKENS
-from render import VariableBank, VariableType, Variable
-
+from util.token import Token, TokenType, STRUCTURE_TOKENS, LITERAL_TOKENS, INVALID_EXPRESSION_TOKENS, OPERATOR_TOKENS, BOOLEAN_OPERATOR_TOKENS, NUMERIC_OPERATOR_TOKENS
+from render import VariableBank, VariableType, Variable, NUMERIC_TYPES
 
 # NOTE(volatus): these exist because Treesitter is stupid
 OPEN_BRACKET = "{"
 CLOSE_BRACKET = "}"
+
+
+PRECEDENCE_TABLE = {
+    TokenType.OR: 1,
+    TokenType.AND: 2,
+    TokenType.NOT: 3,
+
+    TokenType.EQUAL: 4,
+    TokenType.GREATER: 4,
+    TokenType.LESS: 4,
+    TokenType.NOT_EQUAL: 4,
+
+    TokenType.ADDITION: 5,
+    TokenType.SUBTRACTION: 5,
+
+    TokenType.MULTIPLICATION: 6,
+    TokenType.DIVISION: 6,
+    TokenType.MODULUS: 6,
+}
+
+
+class Expression:
+    def __repr__(self) -> str:
+        return f"EXPR"
+
+
+@dataclass
+class ExpressionValue(Expression):
+    literal: Token
+
+    def __repr__(self) -> str:
+        return f"VALUE({self.literal})"
+
+
+@dataclass
+class ExpressionOperation(Expression):
+    operator: Token
+    left: ExpressionValue
+    right: ExpressionValue
+
+    def __repr__(self) -> str:
+        return f"[{left}]{operator}[{right}]"
+
+
+def match_paren_left_to_right(tokens: list[Token], anchor_index: int) -> int:
+    pair_count: int = 0
+
+    for i in range(anchor_index, -1, -1):
+        token = tokens[i]
+
+        if token.token_type == TokenType.RPAREN:
+            pair_count += 1
+        elif token.token_type == TokenType.LPAREN:
+            pair_count -= 1
+
+        if pair_count == 0:
+            return i
+
+    raise Exception("Unmatched parenthesis in expression")
+
+
+def parse_expression(tokens: list[Token]) -> Expression:
+    if len(tokens) == 0:
+        raise Exception("Unexpected empty expression token group")
+
+    if len(tokens) == 1:
+        return ExpressionValue(tokens[0])
+
+    if tokens[0].token_type == TokenType.LPAREN and tokens[-1].token_type == TokenType.RPAREN:
+        return parse_expression(tokens[1:-1])
+
+    root_index: int = -1
+    lowest_precedence: int = sys.maxsize
+
+    i: int = len(tokens) - 1
+    while i >= 0:
+        token = tokens[i]
+
+        if token.token_type == TokenType.RPAREN:
+            i = match_paren_left_to_right(tokens, i)
+        elif token.token_type in OPERATOR_TOKENS:
+            token_precedence = PRECEDENCE_TABLE[token.token_type]
+            if token_precedence < lowest_precedence:
+                root_index = i
+                lowest_precedence = token_precedence
+
+        i -= 1
+
+    if root_index == -1:
+        raise Exception(f"Unexpected extra value '{tokens[1]}' found in expression")
+
+    left_side = tokens[:root_index]
+
+    if len(left_side) == 0:
+        raise Exception(f"Missing left side of operator '{tokens[root_index]}'")
+
+    if len(tokens) < root_index + 2:
+        raise Exception(f"Missing right side of operator '{tokens[root_index]}'")
+
+    right_side = tokens[root_index + 1:]
+
+    return ExpressionOperation(
+        tokens[root_index],
+        parse_expression(left_side),
+        parse_expression(right_side)
+    )
+
+
+def type_from_literal(literal: Token) -> VariableType:
+    if literal.token_type == TokenType.BOOLEAN:
+        return VariableType.BOOLEAN
+    elif literal.token_type == TokenType.RATIONAL:
+        return VariableType.RATIONAL
+    elif literal.token_type == TokenType.INTEGER:
+        return VariableType.INTEGER
+    elif literal.token_type == TokenType.STRING:
+        return VariableType.STRING
+    else:
+        raise Exception(f"Invalid literal type '{literal.token_type}'")
+
+
+def get_expression_type(expression: Expression, varbank: VariableBank) -> VariableType:
+    if isinstance(expression, ExpressionValue):
+        if expression.literal.token_type == TokenType.IDENTIFIER:
+            variable = varbank.get(expression.literal.value)
+            return variable.vartype
+        elif expression.literal.token_type in LITERAL_TOKENS:
+            return type_from_literal(expression.literal)
+        else:
+            raise Exception(f"Non-literal and non-identifier toked '{expression.literal}' used as value")
+    elif isinstance(expression, ExpressionOperation):
+        left_type = get_expression_type(expression.left)
+        right_type = get_expression_type(expression.right)
+
+        if expression.operator.token_type in BOOLEAN_OPERATOR_TOKENS:
+            if left_type != VariableType.BOOLEAN or right_type != VariableType.BOOLEAN:
+                raise Exception(f"Invalid operands for boolean operation")
+
+            return VariableType.BOOLEAN
+        elif expression.operator.token_type in NUMERIC_OPERATOR_TOKENS:
+            if left_type not in NUMERIC_TYPES or right_type not in NUMERIC_TYPES:
+                raise Exception(f"Invalid operands for integer operation")
+
+            if left_type == VariableType.RATIONAL or right_type == VariableType.RATIONAL:
+                return VariableType.RATIONAL
+            else:
+                return VariableType.INTEGER
+    else:
+        raise Exception(f"Invalid expression type '{expression}'")
 
 
 def validate_expression(tokens: list, varbank: VariableBank) -> None:
@@ -100,11 +248,11 @@ class CreateStatement(Statement):
 
     def validate_syntax(self) -> bool:
         return (
-            len(self.tokens) >= 4
-            and self.tokens[0].token_type == TokenType.CREATE
-            and self.tokens[1].token_type == TokenType.TYPE
-            and self.tokens[2].token_type == TokenType.VARTYPE
-            and self.tokens[3].token_type == TokenType.IDENTIFIER
+                len(self.tokens) >= 4
+                and self.tokens[0].token_type == TokenType.CREATE
+                and self.tokens[1].token_type == TokenType.TYPE
+                and self.tokens[2].token_type == TokenType.VARTYPE
+                and self.tokens[3].token_type == TokenType.IDENTIFIER
         )
 
     def render(self, varbank: VariableBank) -> str:
@@ -126,6 +274,12 @@ class CreateStatement(Statement):
         else:
             raise Exception(f"Unexpected variable type '{var_type_str}'")
 
+        if var_value is not None:
+            value_type = get_expression_type(parse_expression(var_value), varbank)
+
+            if value_type != var_type:
+                raise Exception(f"Cannot assign value of type {value_type} to identifier of type {var_type}")
+
         varbank.create(var_name, is_constant, var_type, var_value)
 
         java_components = []
@@ -146,9 +300,9 @@ class CreateStatement(Statement):
 class WriteStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.tokens) >= 2
-            and self.tokens[0].token_type == TokenType.WRITE
-            and self.tokens[1].token_type == TokenType.STRING
+                len(self.tokens) >= 2
+                and self.tokens[0].token_type == TokenType.WRITE
+                and self.tokens[1].token_type == TokenType.STRING
         )
 
     def render(self, varbank: VariableBank) -> str:
@@ -160,10 +314,10 @@ class WriteStatement(Statement):
 class SetStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.tokens) >= 4
-            and self.tokens[0].token_type == TokenType.SET
-            and self.tokens[1].token_type == TokenType.IDENTIFIER
-            and self.tokens[2].token_type == TokenType.TO
+                len(self.tokens) >= 4
+                and self.tokens[0].token_type == TokenType.SET
+                and self.tokens[1].token_type == TokenType.IDENTIFIER
+                and self.tokens[2].token_type == TokenType.TO
         )
 
     def render(self, varbank: VariableBank) -> str:
@@ -180,9 +334,9 @@ class SetStatement(Statement):
 class ReadStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.tokens) == 2 and
-            self.tokens[0].token_type == TokenType.READ and
-            self.tokens[1].token_type == TokenType.IDENTIFIER
+                len(self.tokens) == 2 and
+                self.tokens[0].token_type == TokenType.READ and
+                self.tokens[1].token_type == TokenType.IDENTIFIER
         )
 
     def render(self, varbank: VariableBank) -> str:
@@ -218,6 +372,8 @@ class Structure:
     def render_branch(self, varbank: VariableBank, i: int) -> list[str]:
         lines = []
 
+        varbank.start_scope()
+
         for item in self.branches[i].content_tokens:
             if isinstance(item, Statement):
                 lines.append(item.render(varbank))
@@ -225,6 +381,8 @@ class Structure:
                 lines.extend(item.render(varbank))
             else:
                 raise Exception(f"Unexpected branch item found {item}")
+
+        varbank.end_scope()
 
         return lines
 
@@ -273,92 +431,9 @@ class DoWhileStructure(Structure):
         return lines
 
 
-def separate_conditions_with_parentheses(string):
-    string = string.lower()
-    logical_operators = re.compile(r'\s+(and|or)\s+')
-    parts = logical_operators.split(string)
-    result_parts = []
-
-    for part in parts:
-        part = part.strip()
-        if part == 'and':
-            result_parts.append('&&')
-        elif part == 'or':
-            result_parts.append('||')
-        else:
-            result_parts.append(f"({part})")
-
-    result = ' '.join(result_parts)
-
-    return result
-
-
-def find_variables_in_condition(variables, condition):
-    pattern = re.compile(r'\b\w+\b')
-
-    potential_vars = pattern.findall(condition)
-
-    actual_vars = [var for var in potential_vars if var in variables]
-
-    return actual_vars
-
-
-def evaluate_condition(condition, variables, executor):
-    try:
-        identifiers = re.findall(r'\b\w+\b', condition)
-
-        for i, var in enumerate(variables):
-            for j, identifier in enumerate(identifiers):
-                if var == identifiers[j]:
-                    variable = variables[i]
-                    value = executor.get().get(identifier)[2]
-
-                    value = value.replace('true', 'True').replace('false', 'False')
-
-                    condition = condition.replace(variable, str(value))
-
-        result = eval(condition)
-        return result
-    except Exception as e:
-        print(f"Erro na condição: {e}")
-        return False
-
-
-def evaluate_expression(tokens, variables):
-    def get_value(token):
-        if token.token_type == TokenType.IDENTIFIER:
-            if token.value in variables:
-                return str(variables[token.value][2])
-            else:
-                raise ValueError(f"Undefined variable: {token.value}")
-        elif token.token_type in LITERAL_TOKENS:
-            return str(token.value)
-        return str(token.value)
-
-    expression_parts = [get_value(token) for token in tokens]
-    expression = ''.join(expression_parts)
-
-    return expression
-
-
 def find_next_token(tokens, token_type, offset):
     for i in range(offset, len(tokens)):
         if tokens[i].token_type == token_type:
-            return i
-
-    return -1
-
-
-def find_matching_end(tokens, offset):
-    pair_count = 0
-
-    for i in range(offset, len(tokens)):
-        if tokens[i].token_type in STRUCTURE_TOKENS:
-            pair_count += 1
-        elif tokens[i].token_type == TokenType.END:
-            pair_count -= 1
-
-        if pair_count == 0:
             return i
 
     return -1
@@ -513,9 +588,9 @@ def synthesize_statements(items): # -> list[Structure | Statement]
 
             if item.structure_type == TokenType.IF:
                 structure = IfStructure(branches=[])
-            if item.structure_type == TokenType.DO:
+            elif item.structure_type == TokenType.DO:
                 structure = DoWhileStructure(branches=[])
-            if item.structure_type == TokenType.WHILE:
+            elif item.structure_type == TokenType.WHILE:
                 structure = WhileStructure(branches=[])
 
             for branch in item.branches:
