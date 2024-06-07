@@ -48,8 +48,36 @@ class TokenType(Enum):
     IDENTIFIER = auto()
 
 
-STRUCTURE_TOKENS = [TokenType.IF, TokenType.ELIF, TokenType.ELSE, TokenType.DO, TokenType.WHILE]
-LITERAL_TOKENS = [TokenType.BOOLEAN, TokenType.NUMBER, TokenType.STRING]
+STRUCTURE_TOKENS = [
+    TokenType.IF,
+    TokenType.ELIF,
+    TokenType.ELSE,
+    TokenType.DO,
+    TokenType.WHILE,
+]
+
+LITERAL_TOKENS = [
+    TokenType.BOOLEAN,
+    TokenType.NUMBER,
+    TokenType.STRING,
+]
+
+INVALID_EXPRESSION_TOKENS = [
+    TokenType.TYPE,
+    TokenType.VARTYPE,
+    TokenType.CREATE,
+    TokenType.DO,
+    TokenType.ELIF,
+    TokenType.ELSE,
+    TokenType.IF,
+    TokenType.READ,
+    TokenType.SET,
+    TokenType.TO,
+    TokenType.WHILE,
+    TokenType.WRITE,
+    TokenType.END,
+    TokenType.THEN,
+]
 
 
 class Token:
@@ -60,5 +88,4 @@ class Token:
         self.column = column
 
     def __repr__(self):
-        return f"Token({self.token_type}, {repr(self.value)})"
-        # return f"Token({self.token_type}, {repr(self.value)}, position[{self.line}:{self.column}])"
+        return f"T({self.token_type}, {repr(self.value)})"

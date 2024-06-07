@@ -1,36 +1,12 @@
 from lexer import Lexer
 from parsa import *
+from render import VariableBank
 import pprint
 import sys
 from os import path
 import subprocess
 
-from src.execute import Executor
-
 EXTENSION = "lang"
-
-
-def print_(code):
-    lexer = Lexer()
-    tokens = lexer.tokenize(code)
-
-    print("• [TOKENS]")
-    pprint.pp(tokens)
-    print()
-
-    print("• [TOKEN GROUPS]")
-    token_groups = group_tokens(tokens)
-    pprint.pp(token_groups)
-    print()
-
-    print("• [RENDERED TOKEN GROUPS]")
-    rendered_tokens = render_groups(token_groups)
-    pprint.pp(rendered_tokens)
-    print()
-
-    print("• [SYNTHESIZED GROUPS]")
-    synthesize_statements(rendered_tokens)
-    pprint.pp(rendered_tokens)
 
 
 def main():
@@ -61,20 +37,34 @@ def main():
 
         lexer = Lexer()
         tokens = lexer.tokenize(code)
-        token_groups = group_tokens(tokens)
-        rendered_tokens = render_groups(token_groups)
-        synthesize_statements(rendered_tokens)
+        grouped_tokens = group_statements(group_structures(tokens))
+        syntax_tree = synthesize_statements(grouped_tokens)
 
-        pprint.pp(rendered_tokens)
+        print("TOKENS::::")
+        pprint.pp(tokens)
+        print("GROUPED TOKENS::::")
+        pprint.pp(grouped_tokens)
+        print("SYNTAX TREE::::")
+        pprint.pp(syntax_tree)
 
         print("Output:", output_path)
 
-        executor = Executor()
+        varbank = VariableBank()
+        lines = []
 
-        for statement in rendered_tokens:
-            executor.execute(statement)
+        for syntax_item in syntax_tree:
+            if isinstance(syntax_item, Statement):
+                lines.append(syntax_item.render(varbank))
+            elif isinstance(syntax_item, Structure):
+                lines.extend(syntax_item.render(varbank))
+            else:
+                raise Exception(f"Unexpected syntax item '{syntax_item}'")
 
-        java_code = executor.generate_java_code(rendered_tokens)
+        java_code = "\n".join(lines)
+
+        print("Variaveis:\n")
+        pprint.pp(varbank._bank)
+        print()
 
         with open(output_path, 'w') as output_file:
             # Preamble
@@ -97,10 +87,6 @@ def main():
         # Executar o arquivo Java compilado
         execute_command = ["java", "-cp", path_dirname, program_name]
         result = subprocess.run(execute_command, check=True, capture_output=True, text=True)
-
-        print("Variaveis:\n")
-        pprint.pp(executor.variables)
-        print()
 
         print("Saída da execução do programa Java:\n")
         print(result.stdout)

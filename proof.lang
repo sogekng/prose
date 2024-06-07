@@ -1,18 +1,19 @@
-create integer variable count 0;
-create string variable mostrar;
+create integer variable amount;
+read amount;
 
-set count to 10;
+write "You chose amount = %d\n" amount;
 
-set mostrar to "a";
+if amount > 3 then
+    write "Amount is greater than 3!\n";
+elif amount < 3 then
+    write "Amount is less than 3!\n";
+else
+    write "Amount is exactly 3!\n";
+end
 
-write mostrar;
-write "O resultado e: " + mostrar;
+create integer variable i 0;
 
-#do
-#    set count to count + 1;
-#    write count;
-#while count < 10 end
-
-#if count == 10 then
-#    write "count e igual a 10";
-#end
+while i < amount do
+    write "%d\n" i;
+    set i to i + 1;
+end
