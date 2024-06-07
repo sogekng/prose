@@ -7,6 +7,9 @@ class TokenType(Enum):
     SKIP = auto()
 
     # Operators
+    NOT = auto()
+    AND = auto()
+    OR = auto()
     ADDITION = auto()
     DIVISION = auto()
     EQUAL = auto()
@@ -19,7 +22,8 @@ class TokenType(Enum):
 
     # Literals
     BOOLEAN = auto()
-    NUMBER = auto()
+    RATIONAL = auto()
+    INTEGER = auto()
     STRING = auto()
 
     # Delimiters
@@ -56,9 +60,43 @@ STRUCTURE_TOKENS = [
     TokenType.WHILE,
 ]
 
+OPERATOR_TOKENS = [
+    TokenType.NOT,
+    TokenType.AND,
+    TokenType.OR,
+    TokenType.ADDITION,
+    TokenType.DIVISION,
+    TokenType.EQUAL,
+    TokenType.GREATER,
+    TokenType.LESS,
+    TokenType.MODULUS,
+    TokenType.MULTIPLICATION,
+    TokenType.NOT_EQUAL,
+    TokenType.SUBTRACTION,
+]
+
+BOOLEAN_OPERATOR_TOKENS = [
+    TokenType.NOT,
+    TokenType.AND,
+    TokenType.OR,
+    TokenType.EQUAL,
+    TokenType.GREATER,
+    TokenType.LESS,
+    TokenType.NOT_EQUAL,
+]
+
+NUMERIC_OPERATOR_TOKENS = [
+    TokenType.ADDITION,
+    TokenType.DIVISION,
+    TokenType.MODULUS,
+    TokenType.MULTIPLICATION,
+    TokenType.SUBTRACTION,
+]
+
 LITERAL_TOKENS = [
     TokenType.BOOLEAN,
-    TokenType.NUMBER,
+    TokenType.RATIONAL,
+    TokenType.INTEGER,
     TokenType.STRING,
 ]
 

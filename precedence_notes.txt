@@ -1,0 +1,37 @@
+1. Has relation operator = boolean expression
+2. Has arithmetic operator = arithmetic expression
+3. No operators = analyze literal
+
+-------------------------------------------------------------------------------
+
+1. Go from right to left, find item with least precedence (no override of same)
+2. Build children from remaining before and remaining after recursively
+
+5 + 1 - 2
+
+    -
+   / \
+  +   2
+ / \
+5   1
+
+5 + 1 - 2 * 3
+[5 + 1[ - [2 * 3]
+[[5] + [1]] - [[2] * [3]]
+
+     -
+    / \
+   /   \
+  *     +
+ / \   / \
+2   3 5   1
+
+5 + (1 - 2) * 3
+
+      +
+     / \
+    *   5
+   / \
+  -   3
+ / \
+1   2

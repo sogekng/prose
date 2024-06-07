@@ -6,6 +6,9 @@ token_regex = {
     TokenType.SKIP: re.compile(r'([\s\n]+)|#.*'),
 
     # Operators
+    TokenType.NOT: re.compile(r'\bnot\b'),
+    TokenType.AND: re.compile(r'\band\b'),
+    TokenType.OR: re.compile(r'\bor\b'),
     TokenType.ADDITION: re.compile(r'\+'),
     TokenType.DIVISION: re.compile(r'/'),
     TokenType.EQUAL: re.compile(r'=='),
@@ -18,7 +21,8 @@ token_regex = {
 
     # Literals
     TokenType.BOOLEAN: re.compile(r'\btrue|false\b'),
-    TokenType.NUMBER: re.compile(r'\d+(\.\d+)?|\.\d+'),
+    TokenType.RATIONAL: re.compile(r'\d+\.\d+|\.\d+'),
+    TokenType.INTEGER: re.compile(r'\d+'),
     TokenType.STRING: re.compile(r'"([^"\\]|\\.)*"'),
 
     # Delimiters
