@@ -1,0 +1,19 @@
+create integer variable amount;
+read amount;
+
+write "You chose amount = %d\n" amount;
+
+if amount > 3 then
+    write "Amount is greater than 3!\n";
+elif amount < 3 then
+    write "Amount is less than 3!\n";
+else
+    write "Amount is exactly 3!\n";
+end
+
+create integer variable i 0;
+
+while i < amount do
+    write "%d\n" i;
+    set i to i + 1;
+end

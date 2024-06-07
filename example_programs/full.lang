@@ -1,0 +1,41 @@
+create rational constant PI 3.4;
+create integer variable x 0;
+create integer variable y;
+set y to 7;
+create integer variable z (x + y);
+
+write "%d == 2" (1 + 1); # should be 2
+write "%d == 0" (1 - 1); # should be 0
+write "%d == 1" (1 * 1); # should be 1
+write "%d == 5" (10 / 2); # should be 5
+write "%d == 7" (5 + 1 * 2); # should be 7
+write "%d == 4" (5 / 2 + 1 * 2); # should be 4
+write "%d == 8" (5 / 2 + 1 * 2 * 3); # should be 8
+write "%d == 7" (2 / 2 + 1 * 2 * 3); # should be 7
+write "%d == 0" (2 / (2 + 1) * 2 * 3); # should be 0
+
+write "%b == false" (5 > 5); # should be false
+write "%b == true" (5 < 6); # should be true
+write "%b == true" (5 >= 5); # should be true
+write "%b == true" (5 <= 7); # should be true
+write "%b == false" (5 == 6); # should be false
+write "%b == false" (5 != 5); # should be false
+
+if x < y then
+    write "X is less than Y";
+elif x > y then
+    write "X is greater than Y":
+else
+    write "X is equal to Y";
+end
+
+create integer variable i 0;
+
+do
+    set i to 0;
+while x == y end
+
+create string variable answer;
+read answer;
+
+write "Your answer was '%s'." answer;

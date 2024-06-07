@@ -1,6 +1,0 @@
-read number;
-while number > 0 do
-    write "Número atual: ", number;
-    set number to number - 1;
-end
-write "Loop completo.";
