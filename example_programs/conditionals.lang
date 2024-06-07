@@ -1,0 +1,9 @@
+create integer constant EXAMPLE 32;
+
+if EXAMPLE == 32 then
+    write "Example is 32";
+elif EXAMPLE == 64 then
+    write "Example is 64";
+else
+    write "Example is neither 32 or 64";
+end
