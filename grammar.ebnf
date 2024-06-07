@@ -1,0 +1,40 @@
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
+type = "string" | "integer" | "rational" | "boolean";
+escape-sequence = "\" ("a".."z" | "A".."Z" | "\" | '"');
+
+boolean-literal = "true" | "false";
+integer-literal = ["-"] digit {digit};
+rational-literal = ["-"] [integer-value] "." integer-value;
+string-literal = '"' {(U - '"' - "\") | (escape-sequence)} '"';
+number-literal = integer-literal | rational-literal;
+literal = boolean-literal | number-literal | string-literal;
+
+identifier = ("a".."z" | "A".."Z" | "_") {"a".."z" | "A".."Z" | "_" | digit};
+
+arith-operator = "+" | "-" | "*" | "/" | "%";
+arith-compound = expression ("+" | "-") expression;
+arith-expression = arith-compound | number-literal;
+
+arith-expression = arith-term arith-subexpression;
+arith-subexpression = ("+" | "-") arith-term arith-subexpression;
+
+arith-term = arith-factor arith-subterm;
+arith-subterm = ("*" | "/" | "%") arith-factor arith-subterm;
+
+arith-factor = "(" arith-expression ")" | number-literal | identifier;
+
+boolean-operator = "!" | "&&" | "||" | "==" | "!=" | ">" | "<";
+boolean-expression = expression boolean-operator expression | boolean-literal;
+
+expression = ["("] (literal | boolean-expression | arith-factor) [")"];
+
+declaration-statement = "create" type ("variable" | "constant") identifier [expression] ";";
+assignment-statement = "set" identifier "to" expression ";";
+write-statement = "write" string-literal {expression} ";";
+read-statement = "read" identifier ";";
+while-statement = "while" expression "do" {statement} "end";
+do-while-statement = "do" {statement} "while" expression "end";
+if-statement = "if" expression "then" {statement} {"elif" expression "then" {statement}} ["else" {statement}] "end";
+statement = declaration-statement | assignment-statement | write-statement | read-statement | while-statement | do-while-statement | if-statement;
+
+program = statement {statement};
