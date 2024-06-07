@@ -11,10 +11,6 @@ literal = boolean-literal | number-literal | string-literal;
 
 identifier = ("a".."z" | "A".."Z" | "_") {"a".."z" | "A".."Z" | "_" | digit};
 
-arith-operator = "+" | "-" | "*" | "/" | "%";
-arith-compound = expression ("+" | "-") expression;
-arith-expression = arith-compound | number-literal;
-
 arith-expression = arith-term arith-subexpression;
 arith-subexpression = ("+" | "-") arith-term arith-subexpression;
 
