@@ -6,9 +6,9 @@ token_regex = {
     TokenType.SKIP: re.compile(r'([\s\n]+)|#.*'),
 
     # Operators
-    TokenType.NOT: re.compile(r'\bnot\b'),
-    TokenType.AND: re.compile(r'\band\b'),
-    TokenType.OR: re.compile(r'\bor\b'),
+    TokenType.NOT: re.compile(r'!'),
+    TokenType.AND: re.compile(r'&&'),
+    TokenType.OR: re.compile(r'\|\|'),
     TokenType.ADDITION: re.compile(r'\+'),
     TokenType.DIVISION: re.compile(r'/'),
     TokenType.EQUAL: re.compile(r'=='),
