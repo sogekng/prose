@@ -51,10 +51,6 @@ class TokenType(Enum):
     END = auto()
     THEN = auto()
 
-    # functions
-    FUNCTION = auto()
-    RETURN = auto()
-
     IDENTIFIER = auto()
 
 
@@ -63,8 +59,7 @@ STRUCTURE_TOKENS = [
     TokenType.ELIF,
     TokenType.ELSE,
     TokenType.DO,
-    TokenType.WHILE,
-    TokenType.FUNCTION
+    TokenType.WHILE
 ]
 
 OPERATOR_TOKENS = [
