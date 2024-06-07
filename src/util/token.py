@@ -26,6 +26,8 @@ class TokenType(Enum):
     LPAREN = auto()
     RPAREN = auto()
     SEMICOLON = auto()
+    COMMA = auto()
+    COLON = auto()
 
     # Types
     TYPE = auto()
@@ -45,6 +47,10 @@ class TokenType(Enum):
     END = auto()
     THEN = auto()
 
+    # functions
+    FUNCTION = auto()
+    RETURN = auto()
+
     IDENTIFIER = auto()
 
 
@@ -54,6 +60,7 @@ STRUCTURE_TOKENS = [
     TokenType.ELSE,
     TokenType.DO,
     TokenType.WHILE,
+    TokenType.FUNCTION
 ]
 
 LITERAL_TOKENS = [

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
+from typing import List, Tuple
 import re
 
-from util.token import TokenType, STRUCTURE_TOKENS, LITERAL_TOKENS, INVALID_EXPRESSION_TOKENS
+from util.token import TokenType, STRUCTURE_TOKENS, LITERAL_TOKENS, INVALID_EXPRESSION_TOKENS, Token
 from render import VariableBank, VariableType, Variable
-
 
 # NOTE(volatus): these exist because Treesitter is stupid
 OPEN_BRACKET = "{"
@@ -100,11 +100,11 @@ class CreateStatement(Statement):
 
     def validate_syntax(self) -> bool:
         return (
-            len(self.tokens) >= 4
-            and self.tokens[0].token_type == TokenType.CREATE
-            and self.tokens[1].token_type == TokenType.TYPE
-            and self.tokens[2].token_type == TokenType.VARTYPE
-            and self.tokens[3].token_type == TokenType.IDENTIFIER
+                len(self.tokens) >= 4
+                and self.tokens[0].token_type == TokenType.CREATE
+                and self.tokens[1].token_type == TokenType.TYPE
+                and self.tokens[2].token_type == TokenType.VARTYPE
+                and self.tokens[3].token_type == TokenType.IDENTIFIER
         )
 
     def render(self, varbank: VariableBank) -> str:
@@ -146,9 +146,9 @@ class CreateStatement(Statement):
 class WriteStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.tokens) >= 2
-            and self.tokens[0].token_type == TokenType.WRITE
-            and self.tokens[1].token_type == TokenType.STRING
+                len(self.tokens) >= 2
+                and self.tokens[0].token_type == TokenType.WRITE
+                and self.tokens[1].token_type == TokenType.STRING
         )
 
     def render(self, varbank: VariableBank) -> str:
@@ -160,10 +160,10 @@ class WriteStatement(Statement):
 class SetStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.tokens) >= 4
-            and self.tokens[0].token_type == TokenType.SET
-            and self.tokens[1].token_type == TokenType.IDENTIFIER
-            and self.tokens[2].token_type == TokenType.TO
+                len(self.tokens) >= 4
+                and self.tokens[0].token_type == TokenType.SET
+                and self.tokens[1].token_type == TokenType.IDENTIFIER
+                and self.tokens[2].token_type == TokenType.TO
         )
 
     def render(self, varbank: VariableBank) -> str:
@@ -180,9 +180,9 @@ class SetStatement(Statement):
 class ReadStatement(Statement):
     def validate_syntax(self) -> bool:
         return (
-            len(self.tokens) == 2 and
-            self.tokens[0].token_type == TokenType.READ and
-            self.tokens[1].token_type == TokenType.IDENTIFIER
+                len(self.tokens) == 2 and
+                self.tokens[0].token_type == TokenType.READ and
+                self.tokens[1].token_type == TokenType.IDENTIFIER
         )
 
     def render(self, varbank: VariableBank) -> str:
@@ -203,6 +203,19 @@ class ReadStatement(Statement):
             method = "nextBoolean"
 
         return f"{var_name} = scanner.{method}();"
+
+
+class ReturnStatement(Statement):
+    def validate_syntax(self) -> bool:
+        return (
+            len(self.tokens) >= 2
+            and self.tokens[0].token_type == TokenType.RETURN
+        )
+
+    def render(self, varbank: VariableBank) -> str:
+        expression_tokens = self.tokens[1:]
+        validate_expression(expression_tokens, varbank)
+        return f"return {render_expression(expression_tokens)};"
 
 
 @dataclass
@@ -269,6 +282,26 @@ class DoWhileStructure(Structure):
         lines.append(f"do {OPEN_BRACKET}")
         lines.extend(self.render_branch(varbank, 0))
         lines.append(f"{CLOSE_BRACKET} while ({render_expression(self.branches[0].condition_tokens)});")
+
+        return lines
+
+
+@dataclass
+class FunctionStructure(Structure):
+    def render(self, varbank: VariableBank) -> list[str]:
+        lines = []
+
+        branch = self.branches[0].condition_tokens
+
+        lines.append(f"public static void {render_expression(self.branches[0].condition_tokens)} {OPEN_BRACKET}")
+        lines.extend(self.render_branch(varbank, 0))
+
+        # for i in range(1, len(self.branches)):
+        #     branch = self.branches[i]
+        #
+        #     lines.extend(self.render_branch(varbank, i))
+
+        lines.append(CLOSE_BRACKET)
 
         return lines
 
@@ -384,7 +417,18 @@ def group_structures(tokens):
     while i < len(tokens):
         token = tokens[i]
 
-        if token.token_type == TokenType.DO:
+        if token.token_type == TokenType.FUNCTION:
+            stack.append(StructureGroup(
+                structure_type=token.token_type,
+                branches=[Branch(condition_tokens=[], content_tokens=[])]
+            ))
+            i += 1
+
+            while tokens[i].token_type != TokenType.DO:
+                stack[-1].branches[0].condition_tokens.append(tokens[i])
+                i += 1
+
+        elif token.token_type == TokenType.DO:
             stack.append(StructureGroup(
                 structure_type=token.token_type,
                 branches=[Branch(condition_tokens=[], content_tokens=[])]
@@ -491,6 +535,8 @@ def build_statement(group: StatementGroup) -> Statement:
         statement = ReadStatement(group.tokens)
     elif group.tokens[0].token_type == TokenType.SET:
         statement = SetStatement(group.tokens)
+    elif group.tokens[0].token_type == TokenType.RETURN:
+        statement = ReturnStatement(group.tokens)
     else:
         raise Exception(f"Unexpected token type '{group.tokens[0].token_type}'")
 
@@ -513,10 +559,12 @@ def synthesize_statements(items): # -> list[Structure | Statement]
 
             if item.structure_type == TokenType.IF:
                 structure = IfStructure(branches=[])
-            if item.structure_type == TokenType.DO:
+            elif item.structure_type == TokenType.DO:
                 structure = DoWhileStructure(branches=[])
-            if item.structure_type == TokenType.WHILE:
+            elif item.structure_type == TokenType.WHILE:
                 structure = WhileStructure(branches=[])
+            elif item.structure_type == TokenType.FUNCTION:
+                structure = FunctionStructure(branches=[])
 
             for branch in item.branches:
                 structure.branches.append(Branch(
