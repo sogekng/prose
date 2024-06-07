@@ -273,6 +273,26 @@ class DoWhileStructure(Structure):
         return lines
 
 
+def separate_conditions_with_parentheses(string):
+    string = string.lower()
+    logical_operators = re.compile(r'\s+(and|or)\s+')
+    parts = logical_operators.split(string)
+    result_parts = []
+
+    for part in parts:
+        part = part.strip()
+        if part == 'and':
+            result_parts.append('&&')
+        elif part == 'or':
+            result_parts.append('||')
+        else:
+            result_parts.append(f"({part})")
+
+    result = ' '.join(result_parts)
+
+    return result
+
+
 def find_variables_in_condition(variables, condition):
     pattern = re.compile(r'\b\w+\b')
 
@@ -292,9 +312,10 @@ def evaluate_condition(condition, variables, executor):
                 if var == identifiers[j]:
                     variable = variables[i]
                     value = executor.get().get(identifier)[2]
-                    # value = identifiers[j + 1]
 
-                    condition = condition.replace(variable, value)
+                    value = value.replace('true', 'True').replace('false', 'False')
+
+                    condition = condition.replace(variable, str(value))
 
         result = eval(condition)
         return result

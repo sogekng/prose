@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 create integer variable amount;
 read amount;
 
@@ -17,3 +18,18 @@ while i < amount do
     write "%d\n" i;
     set i to i + 1;
 end
+=======
+create integer variable count 0;
+create boolean variable verdadeiro;
+create string variable mostrar;
+
+set verdadeiro to true;
+set mostrar to "resultado: ";
+
+
+do
+    set count to count + 1;
+    write count;
+    set verdadeiro to false;
+while count < 10 and verdadeiro == true end
+>>>>>>> de39643bbb3c2bc43aa2583f98300c9e29f6a14d
