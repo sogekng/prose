@@ -6,7 +6,7 @@ import sys
 from os import path
 import subprocess
 
-EXTENSION = "lang"
+EXTENSION = "prose"
 VERSION = "1.0.1"
 USAGE = "Usage: lang <input_file>"
 
