@@ -302,7 +302,10 @@ class WriteStatement(Statement):
         return (
                 len(self.tokens) >= 2
                 and self.tokens[0].token_type == TokenType.WRITE
-                and self.tokens[1].token_type == TokenType.STRING
+                and (
+                    self.tokens[1].token_type == TokenType.STRING
+                    or self.tokens[1].token_type == TokenType.IDENTIFIER
+                )
         )
 
     def render(self, varbank: VariableBank) -> str:

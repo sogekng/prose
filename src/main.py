@@ -6,25 +6,30 @@ import sys
 from os import path
 import subprocess
 
-EXTENSION = "lang"
+EXTENSION = "prose"
+VERSION = "1.0.3"
+USAGE = "Usage: lang <input_file>"
 
 
 def main():
+    print(f"Lang v{VERSION}")
+
     if len(sys.argv) < 2:
         print(f"Missing argument <file.{EXTENSION}>")
+        print(USAGE)
         return
 
     file_path = sys.argv[1]
 
     if not file_path.endswith(f".{EXTENSION}"):
-        print(f"File has the wrong extension; should end with .{EXTENSION}")
+        print(f"File has the wrong extension; should end with '.{EXTENSION}'")
         return
 
     path_dirname = path.dirname(file_path)
     path_basename = path.basename(file_path)
 
     if len(path_basename) < len(EXTENSION) + 2:
-        print("Invalid file name")
+        print("Invalid file name provided")
         return
 
     program_name = path_basename[:-len(EXTENSION) - 1]
@@ -32,20 +37,25 @@ def main():
 
     try:
         code: str
-        with open(file_path, 'r') as file:
-            code = file.read()
+
+        try:
+            with open(file_path, 'r') as file:
+                code = file.read()
+        except FileNotFoundError:
+            print(f"O arquivo {file_path} não foi encontrado.")
+            return
 
         lexer = Lexer()
         tokens = lexer.tokenize(code)
-        grouped_tokens = group_statements(group_structures(tokens))
-        syntax_tree = synthesize_statements(grouped_tokens)
 
-        print("TOKENS::::")
-        pprint.pp(tokens)
-        print("GROUPED TOKENS::::")
-        pprint.pp(grouped_tokens)
-        print("SYNTAX TREE::::")
-        pprint.pp(syntax_tree)
+        # print("TOKENS::::")
+        # pprint.pp(tokens)
+        grouped_tokens = group_statements(group_structures(tokens))
+        # print("GROUPED TOKENS::::")
+        # pprint.pp(grouped_tokens)
+        syntax_tree = synthesize_statements(grouped_tokens)
+        # print("SYNTAX TREE::::")
+        # pprint.pp(syntax_tree)
 
         print("Output:", output_path)
 
@@ -62,9 +72,9 @@ def main():
 
         java_code = "\n".join(lines)
 
-        print("Variaveis:\n")
-        pprint.pp(varbank.scopes)
-        print()
+        # print("Variaveis:\n")
+        # pprint.pp(varbank.scopes)
+        # print()
 
         with open(output_path, 'w') as output_file:
             # Preamble
@@ -90,15 +100,11 @@ def main():
 
         print("Saída da execução do programa Java:\n")
         print(result.stdout)
-
-    except FileNotFoundError:
-        print(f"O arquivo {file_path} não foi encontrado.")
     except subprocess.CalledProcessError as e:
         print(f"Erro ao compilar ou executar o arquivo Java: {e}")
         print(f"Saída do erro: {e.output}")
     except Exception as e:
         print(f"Ocorreu um erro ao processar o arquivo: {e}")
-        raise e
 
 
 if __name__ == "__main__":
