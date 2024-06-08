@@ -127,3 +127,14 @@ while false end
 ### Executando
 
 Rode o script `src/main.py` passando como input o nome do arquivo, e.g. `python src/main.py test_file.prose`.
+
+### Mais
+
+A Prose Lang faz verificação de tipos nas expressões dadas ao `set`, `create`, e nas condicionais das
+estruturas. *Full type parsing* nos permite encontrar erros nas expressões e corretamente identificar
+o tipo final delas.
+
+Erros de sintaxe, onde práticos, são indicados pra correção.
+
+Escopo de sintaxe dentro das estruturas também existe, seguindo as mesmas regras que as de escopo
+do Java (e.g. redeclaração é apontada como erro).

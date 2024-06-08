@@ -7,7 +7,7 @@ from os import path
 import subprocess
 
 EXTENSION = "prose"
-VERSION = "1.0.1"
+VERSION = "1.0.3"
 USAGE = "Usage: lang <input_file>"
 
 
@@ -48,14 +48,14 @@ def main():
         lexer = Lexer()
         tokens = lexer.tokenize(code)
 
-        print("TOKENS::::")
-        pprint.pp(tokens)
+        # print("TOKENS::::")
+        # pprint.pp(tokens)
         grouped_tokens = group_statements(group_structures(tokens))
-        print("GROUPED TOKENS::::")
-        pprint.pp(grouped_tokens)
+        # print("GROUPED TOKENS::::")
+        # pprint.pp(grouped_tokens)
         syntax_tree = synthesize_statements(grouped_tokens)
-        print("SYNTAX TREE::::")
-        pprint.pp(syntax_tree)
+        # print("SYNTAX TREE::::")
+        # pprint.pp(syntax_tree)
 
         print("Output:", output_path)
 
@@ -72,9 +72,9 @@ def main():
 
         java_code = "\n".join(lines)
 
-        print("Variaveis:\n")
-        pprint.pp(varbank.scopes)
-        print()
+        # print("Variaveis:\n")
+        # pprint.pp(varbank.scopes)
+        # print()
 
         with open(output_path, 'w') as output_file:
             # Preamble
