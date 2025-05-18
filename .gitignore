@@ -1,7 +1,35 @@
+# Arquivos de Bytecode Python
 __pycache__/
-*.pyc
-.env
-.venv
-.idea
-*.log
-*.DS_Store
+*.py[cod]
+*$py.class
+
+
+# Pasta de cache da linguagem Prose
+procache/
+
+# Arquivos de ambiente virtual Python (exemplos)
+# .env
+# .venv
+# env/
+# venv/
+# ENV/
+# VENV/
+
+# Arquivos de IDEs e editores (exemplos)
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Arquivos de build do PyInstaller
+build/
+dist/
+*.spec
+
+# Outros arquivos específicos do macOS
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+._*
