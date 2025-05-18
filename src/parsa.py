@@ -799,11 +799,7 @@ def synthesize_statements(items: list) -> list:
                 ))
             
             structure_node: Structure
-            # Assume que o primeiro token da estrutura original pode ser usado para linha/coluna, se necessário
-            # Aqui, um token dummy é criado para o structure_type_token, mas idealmente viria do token original (IF, WHILE, DO)
-            first_token_of_structure = Token(item.structure_type, item.structure_type.name.lower(), 0,0) # Token dummy
-            # Se os tokens originais do início da estrutura estiverem disponíveis, use-os.
-            # Por exemplo, se StructureGroup armazenasse o token original (IF, WHILE, DO).
+            first_token_of_structure = Token(item.structure_type, item.structure_type.name.lower(), 0,0)
 
             if item.structure_type == TokenType.IF:
                 structure_node = IfStructure(structure_type_token=first_token_of_structure, branches=new_branches) 
