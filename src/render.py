@@ -1,4 +1,5 @@
 from enum import Enum, auto
+import token
 
 
 class VariableType(Enum):
