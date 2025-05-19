@@ -3,52 +3,53 @@ from util.token import Token, TokenType
 
 token_regex = {
     # Specials
-    TokenType.SKIP: re.compile(r'([\s\n]+)|#.*'),
+    TokenType.SKIP:           re.compile(r'([\s\n]+)|#.*'),
 
     # Operators
-    TokenType.NOT: re.compile(r'!'),
-    TokenType.AND: re.compile(r'&&'),
-    TokenType.OR: re.compile(r'\|\|'),
-    TokenType.ADDITION: re.compile(r'\+'),
-    TokenType.DIVISION: re.compile(r'/'),
-    TokenType.EQUAL: re.compile(r'=='),
-    TokenType.GREATER: re.compile(r'>'),
-    TokenType.LESS: re.compile(r'<'),
-    TokenType.MODULUS: re.compile(r'%'),
+    TokenType.NOT:            re.compile(r'!'),
+    TokenType.AND:            re.compile(r'&&'),
+    TokenType.OR:             re.compile(r'\|\|'),
+    TokenType.ADDITION:       re.compile(r'\+'),
+    TokenType.DIVISION:       re.compile(r'/'),
+    TokenType.EQUAL:          re.compile(r'=='),
+    TokenType.GREATER:        re.compile(r'>'),
+    TokenType.LESS:           re.compile(r'<'),
+    TokenType.MODULUS:        re.compile(r'%'),
     TokenType.MULTIPLICATION: re.compile(r'\*'),
-    TokenType.NOT_EQUAL: re.compile(r'!='),
-    TokenType.SUBTRACTION: re.compile(r'-'),
+    TokenType.NOT_EQUAL:      re.compile(r'!='),
+    TokenType.SUBTRACTION:    re.compile(r'-'),
 
     # Literals
-    TokenType.BOOLEAN: re.compile(r'\btrue|false\b'),
-    TokenType.RATIONAL: re.compile(r'\d+\.\d+|\.\d+'),
-    TokenType.INTEGER: re.compile(r'\d+'),
-    TokenType.STRING: re.compile(r'"([^"\\]|\\.)*"'),
+    TokenType.BOOLEAN:        re.compile(r'\btrue|false\b'),
+    TokenType.RATIONAL:       re.compile(r'\d+\.\d+|\.\d+'),
+    TokenType.INTEGER:        re.compile(r'\d+'),
+    TokenType.STRING:         re.compile(r'"([^"\\]|\\.)*"'),
 
     # Delimiters
-    TokenType.LPAREN: re.compile(r'\('),
-    TokenType.RPAREN: re.compile(r'\)'),
-    TokenType.SEMICOLON: re.compile(r';'),
+    TokenType.LPAREN:         re.compile(r'\('),
+    TokenType.RPAREN:         re.compile(r'\)'),
+    TokenType.SEMICOLON:      re.compile(r';'),
 
     # Types
-    TokenType.TYPE: re.compile(r'\b(string)|(integer)|(rational)|(boolean)\b'),
+    TokenType.TYPE:           re.compile(r'\b(string)|(integer)|(rational)|(boolean)\b'),
 
     # Keywords
-    TokenType.VARTYPE: re.compile(r'\b(constant)|(variable)\b'),
-    TokenType.CREATE: re.compile(r'\bcreate\b'),
-    TokenType.DO: re.compile(r'\bdo\b'),
-    TokenType.ELSE: re.compile(r'\belse\b'),
-    TokenType.ELIF: re.compile(r'\belif\b'),
-    TokenType.IF: re.compile(r'\bif\b'),
-    TokenType.READ: re.compile(r'\bread\b'),
-    TokenType.SET: re.compile(r'\bset\b'),
-    TokenType.TO: re.compile(r'\bto\b'),
-    TokenType.WHILE: re.compile(r'\bwhile\b'),
-    TokenType.WRITE: re.compile(r'\bwrite\b'),
-    TokenType.END: re.compile(r'\bend\b'),
-    TokenType.THEN: re.compile(r'\bthen\b'),
+    TokenType.VARTYPE:        re.compile(r'\b(constant)|(variable)\b'),
+    TokenType.CREATE:         re.compile(r'\bcreate\b'),
+    TokenType.DO:             re.compile(r'\bdo\b'),
+    TokenType.ELSE:           re.compile(r'\belse\b'),
+    TokenType.ELIF:           re.compile(r'\belif\b'),
+    TokenType.IF:             re.compile(r'\bif\b'),
+    TokenType.READ:           re.compile(r'\bread\b'),
+    TokenType.SET:            re.compile(r'\bset\b'),
+    TokenType.TO:             re.compile(r'\bto\b'),
+    TokenType.WHILE:          re.compile(r'\bwhile\b'),
+    TokenType.WRITE:          re.compile(r'\bwrite\b'),
+    TokenType.WRITELN:        re.compile(r'\bwriteln\b'),
+    TokenType.END:            re.compile(r'\bend\b'),
+    TokenType.THEN:           re.compile(r'\bthen\b'),
 
-    TokenType.IDENTIFIER: re.compile(r'([a-zA-Z_][a-zA-Z0-9_]*)'),
+    TokenType.IDENTIFIER:     re.compile(r'([a-zA-Z_][a-zA-Z0-9_]*)'),
 }
 
 class Lexer:

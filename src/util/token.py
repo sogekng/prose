@@ -7,49 +7,50 @@ class TokenType(Enum):
     SKIP = auto()
 
     # Operators
-    NOT = auto()
-    AND = auto()
-    OR = auto()
-    ADDITION = auto()
-    DIVISION = auto()
-    EQUAL = auto()
-    GREATER = auto()
-    LESS = auto()
-    MODULUS = auto()
+    NOT            = auto()
+    AND            = auto()
+    OR             = auto()
+    ADDITION       = auto()
+    DIVISION       = auto()
+    EQUAL          = auto()
+    GREATER        = auto()
+    LESS           = auto()
+    MODULUS        = auto()
     MULTIPLICATION = auto()
-    NOT_EQUAL = auto()
-    SUBTRACTION = auto()
+    NOT_EQUAL      = auto()
+    SUBTRACTION    = auto()
 
     # Literals
-    BOOLEAN = auto()
+    BOOLEAN  = auto()
     RATIONAL = auto()
-    INTEGER = auto()
-    STRING = auto()
+    INTEGER  = auto()
+    STRING   = auto()
 
     # Delimiters
-    LPAREN = auto()
-    RPAREN = auto()
+    LPAREN    = auto()
+    RPAREN    = auto()
     SEMICOLON = auto()
-    COMMA = auto()
-    COLON = auto()
+    COMMA     = auto()
+    COLON     = auto()
 
     # Types
     TYPE = auto()
 
     # Keywords
     VARTYPE = auto()
-    CREATE = auto()
-    DO = auto()
-    ELIF = auto()
-    ELSE = auto()
-    IF = auto()
-    READ = auto()
-    SET = auto()
-    TO = auto()
-    WHILE = auto()
-    WRITE = auto()
-    END = auto()
-    THEN = auto()
+    CREATE  = auto()
+    DO      = auto()
+    ELIF    = auto()
+    ELSE    = auto()
+    IF      = auto()
+    READ    = auto()
+    SET     = auto()
+    TO      = auto()
+    WHILE   = auto()
+    WRITE   = auto()
+    WRITELN = auto()
+    END     = auto()
+    THEN    = auto()
 
     IDENTIFIER = auto()
 
@@ -115,6 +116,7 @@ INVALID_EXPRESSION_TOKENS = [
     TokenType.TO,
     TokenType.WHILE,
     TokenType.WRITE,
+    TokenType.WRITELN,
     TokenType.END,
     TokenType.THEN,
 ]
@@ -123,9 +125,9 @@ INVALID_EXPRESSION_TOKENS = [
 class Token:
     def __init__(self, token_type, value, line, column):
         self.token_type = token_type
-        self.value = value
-        self.line = line
-        self.column = column
+        self.value      = value
+        self.line       = line
+        self.column     = column
 
     def __repr__(self):
         return f"T({self.token_type}, {repr(self.value)})"

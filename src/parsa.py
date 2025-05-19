@@ -309,9 +309,54 @@ class WriteStatement(Statement):
         )
 
     def render(self, varbank: VariableBank) -> str:
-        expression_tokens = self.tokens[1:]
-        validate_expression(expression_tokens, varbank)
-        return f"System.out.printf({', '.join([token.value for token in expression_tokens])});"
+        expression_tokens_for_printf = self.tokens[1:]
+        
+        validate_expression(expression_tokens_for_printf, varbank)
+
+        if not expression_tokens_for_printf:
+            raise ValueError("A lista de tokens para printf não pode estar vazia.")
+        
+        format_string = expression_tokens_for_printf[0].value
+        argument_expression_token_values = [token.value for token in expression_tokens_for_printf[1:]]
+        java_expression_string = "".join(argument_expression_token_values)
+
+        if java_expression_string:
+            final_args_string = f"{format_string}, {java_expression_string}"
+        else:
+            final_args_string = format_string
+                
+        return f"System.out.printf({final_args_string});"
+    
+
+class WriteLnStatement(Statement):
+    def validate_syntax(self) -> bool:
+        return (
+                len(self.tokens) >= 2
+                and self.tokens[0].token_type == TokenType.WRITELN
+                and (
+                    self.tokens[1].token_type == TokenType.STRING
+                    or self.tokens[1].token_type == TokenType.IDENTIFIER
+                )
+        )
+
+    def render(self, varbank: VariableBank) -> str:
+        expression_tokens_for_printf = self.tokens[1:]
+        
+        validate_expression(expression_tokens_for_printf, varbank)
+
+        if not expression_tokens_for_printf:
+            raise ValueError("A lista de tokens para println não pode estar vazia.")
+        
+        format_string = expression_tokens_for_printf[0].value
+        argument_expression_token_values = [token.value for token in expression_tokens_for_printf[1:]]
+        java_expression_string = "".join(argument_expression_token_values)
+
+        if java_expression_string:
+            final_args_string = f"{format_string}, {java_expression_string}"
+        else:
+            final_args_string = format_string
+                
+        return f"System.out.printf({final_args_string});System.out.println();"
 
 
 class SetStatement(Statement):
@@ -473,7 +518,6 @@ def group_structures(tokens):
             while tokens[i].token_type != TokenType.WHILE:
                 stack[-1].branches[0].content_tokens.append(tokens[i])
                 i += 1
-
         elif token.token_type == TokenType.WHILE:
             stack.append(StructureGroup(
                 structure_type=token.token_type,
@@ -485,7 +529,6 @@ def group_structures(tokens):
             while tokens[i].token_type != TokenType.DO:
                 stack[-1].branches[0].condition_tokens.append(tokens[i])
                 i += 1
-
         elif token.token_type == TokenType.IF:
             stack.append(StructureGroup(
                 structure_type=token.token_type,
@@ -497,7 +540,6 @@ def group_structures(tokens):
             while tokens[i].token_type != TokenType.THEN:
                 stack[-1].branches[0].condition_tokens.append(tokens[i])
                 i += 1
-
         elif token.token_type in [TokenType.ELIF, TokenType.ELSE]:
             if not stack or stack[-1].structure_type != TokenType.IF:
                 raise Exception(f"{'elif' if token.token_type == TokenType.ELIF else 'else'} used before an if")
@@ -510,7 +552,6 @@ def group_structures(tokens):
                 while tokens[i].token_type != TokenType.THEN:
                     stack[-1].branches[-1].condition_tokens.append(tokens[i])
                     i += 1
-
         elif token.token_type == TokenType.END:
             if stack[-1].structure_type in STRUCTURE_TOKENS:
                 new_group = stack.pop()
@@ -518,13 +559,10 @@ def group_structures(tokens):
                     stack[-1].branches[-1].content_tokens.append(new_group)
                 else:
                     groups.append(new_group)
-
         elif stack and stack[-1].structure_type == TokenType.DO:
             stack[-1].branches[0].condition_tokens.append(token)
-
         elif stack:
             stack[-1].branches[-1].content_tokens.append(token)
-
         else:
             groups.append(token)
 
@@ -565,6 +603,8 @@ def build_statement(group: StatementGroup) -> Statement:
         statement = CreateStatement(group.tokens)
     elif group.tokens[0].token_type == TokenType.WRITE:
         statement = WriteStatement(group.tokens)
+    elif group.tokens[0].token_type == TokenType.WRITELN:
+        statement = WriteLnStatement(group.tokens)
     elif group.tokens[0].token_type == TokenType.READ:
         statement = ReadStatement(group.tokens)
     elif group.tokens[0].token_type == TokenType.SET:
