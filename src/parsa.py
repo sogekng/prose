@@ -1,656 +1,406 @@
 from dataclasses import dataclass
-import sys
+from util.token import Token, TokenType
+from render import VariableBank, VariableType, Variable
 
-from util.token import Token, TokenType, STRUCTURE_TOKENS, LITERAL_TOKENS, INVALID_EXPRESSION_TOKENS, OPERATOR_TOKENS, BOOLEAN_OPERATOR_TOKENS, NUMERIC_OPERATOR_TOKENS
-from render import VariableBank, VariableType, Variable, NUMERIC_TYPES
-
-# NOTE(volatus): these exist because Treesitter is stupid
-OPEN_BRACKET = "{"
-CLOSE_BRACKET = "}"
-
-
-PRECEDENCE_TABLE = {
-    TokenType.OR: 1,
-    TokenType.AND: 2,
-    TokenType.NOT: 3,
-
-    TokenType.EQUAL: 4,
-    TokenType.GREATER: 4,
-    TokenType.LESS: 4,
-    TokenType.NOT_EQUAL: 4,
-
-    TokenType.ADDITION: 5,
-    TokenType.SUBTRACTION: 5,
-
-    TokenType.MULTIPLICATION: 6,
-    TokenType.DIVISION: 6,
-    TokenType.MODULUS: 6,
+LITERAL_AND_IDENTIFIER_TOKENS = {
+    TokenType.BOOLEAN, TokenType.RATIONAL, TokenType.INTEGER,
+    TokenType.STRING, TokenType.IDENTIFIER
 }
 
+class ParseException(Exception):
+    def __init__(self, message, token):
+        super().__init__(f"Erro na linha {token.line} coluna {token.column}: {message} (token: '{token.value}')")
+        self.token = token
 
+@dataclass
 class Expression:
-    def __repr__(self) -> str:
-        return f"EXPR"
-
-
-@dataclass
-class ExpressionValue(Expression):
-    literal: Token
-
-    def __repr__(self) -> str:
-        return f"VALUE({self.literal})"
-
+    def render(self, varbank: VariableBank) -> str:
+        raise NotImplementedError
 
 @dataclass
-class ExpressionOperation(Expression):
-    operator: Token
-    left: ExpressionValue
-    right: ExpressionValue
-
-    def __repr__(self) -> str:
-        return f"[{self.left}]{self.operator}[{self.right}]"
-
-
-def match_paren_left_to_right(tokens: list[Token], anchor_index: int) -> int:
-    pair_count: int = 0
-
-    for i in range(anchor_index, -1, -1):
-        token = tokens[i]
-
-        if token.token_type == TokenType.RPAREN:
-            pair_count += 1
-        elif token.token_type == TokenType.LPAREN:
-            pair_count -= 1
-
-        if pair_count == 0:
-            return i
-
-    raise Exception("Unmatched parenthesis in expression")
-
-
-def parse_expression(tokens: list[Token]) -> Expression:
-    if len(tokens) == 0:
-        raise Exception("Unexpected empty expression token group")
-
-    if len(tokens) == 1:
-        return ExpressionValue(tokens[0])
-
-    if tokens[0].token_type == TokenType.LPAREN and tokens[-1].token_type == TokenType.RPAREN:
-        return parse_expression(tokens[1:-1])
-
-    root_index: int = -1
-    lowest_precedence: int = sys.maxsize
-
-    i: int = len(tokens) - 1
-    while i >= 0:
-        token = tokens[i]
-
-        if token.token_type == TokenType.RPAREN:
-            i = match_paren_left_to_right(tokens, i)
-        elif token.token_type in OPERATOR_TOKENS:
-            token_precedence = PRECEDENCE_TABLE[token.token_type]
-            if token_precedence < lowest_precedence:
-                root_index = i
-                lowest_precedence = token_precedence
-
-        i -= 1
-
-    if root_index == -1:
-        raise Exception(f"Unexpected extra value '{tokens[1]}' found in expression")
-
-    left_side = tokens[:root_index]
-
-    if len(left_side) == 0:
-        raise Exception(f"Missing left side of operator '{tokens[root_index]}'")
-
-    if len(tokens) < root_index + 2:
-        raise Exception(f"Missing right side of operator '{tokens[root_index]}'")
-
-    right_side = tokens[root_index + 1:]
-
-    return ExpressionOperation(
-        tokens[root_index],
-        parse_expression(left_side),
-        parse_expression(right_side)
-    )
-
-
-def type_from_literal(literal: Token) -> VariableType:
-    if literal.token_type == TokenType.BOOLEAN:
-        return VariableType.BOOLEAN
-    elif literal.token_type == TokenType.RATIONAL:
-        return VariableType.RATIONAL
-    elif literal.token_type == TokenType.INTEGER:
-        return VariableType.INTEGER
-    elif literal.token_type == TokenType.STRING:
-        return VariableType.STRING
-    else:
-        raise Exception(f"Invalid literal type '{literal.token_type}'")
-
-
-def get_expression_type(expression: Expression, varbank: VariableBank) -> VariableType:
-    if isinstance(expression, ExpressionValue):
-        if expression.literal.token_type == TokenType.IDENTIFIER:
-            variable = varbank.get(expression.literal.value)
-            return variable.vartype
-        elif expression.literal.token_type in LITERAL_TOKENS:
-            return type_from_literal(expression.literal)
-        else:
-            raise Exception(f"Non-literal and non-identifier toked '{expression.literal}' used as value")
-    elif isinstance(expression, ExpressionOperation):
-        left_type = get_expression_type(expression.left)
-        right_type = get_expression_type(expression.right)
-
-        if expression.operator.token_type in BOOLEAN_OPERATOR_TOKENS:
-            if left_type != VariableType.BOOLEAN or right_type != VariableType.BOOLEAN:
-                raise Exception(f"Invalid operands for boolean operation")
-
-            return VariableType.BOOLEAN
-        elif expression.operator.token_type in NUMERIC_OPERATOR_TOKENS:
-            if left_type not in NUMERIC_TYPES or right_type not in NUMERIC_TYPES:
-                raise Exception(f"Invalid operands for integer operation")
-
-            if left_type == VariableType.RATIONAL or right_type == VariableType.RATIONAL:
-                return VariableType.RATIONAL
-            else:
-                return VariableType.INTEGER
-    else:
-        raise Exception(f"Invalid expression type '{expression}'")
-
-
-def validate_expression(tokens: list, varbank: VariableBank) -> None:
-    for token in tokens:
-        if token.token_type in INVALID_EXPRESSION_TOKENS:
-            raise Exception(f"Invalid token found in expression: '{token}'")
-
-        if token.token_type == TokenType.IDENTIFIER:
-            if not varbank.exists(token.value):
-                raise Exception(f"No variable named '{token.value}' was declared")
-
-            if varbank.get(token.value).value is None:
-                raise Exception(f"Variable declared but unvalued: '{token.value}'")
-
-
-def lang_type_to_java_type(lang_type: str) -> str:
-    if lang_type == VariableType.STRING:
-        return "String"
-    elif lang_type == VariableType.INTEGER:
-        return "int"
-    elif lang_type == VariableType.RATIONAL:
-        return "float"
-    elif lang_type == VariableType.BOOLEAN:
-        return "boolean"
-    else:
-        raise Exception(f"Uknown lang type '{lang_type}'")
-
-
-def render_expression(tokens: list) -> str:
-    return ' '.join([token.value for token in tokens])
-
+class Value(Expression):
+    token: Token
+    def render(self, varbank: VariableBank) -> str:
+        return self.token.value
 
 @dataclass
-class Branch:
-    condition_tokens: list
-    content_tokens: list
-
-    def __repr__(self) -> str:
-        condition = ''
-        content = ''
-
-        if self.condition_tokens:
-            condition = f"({', '.join([repr(token) for token in self.condition_tokens])})"
-
-        if self.content_tokens:
-            content = f"[{', '.join([repr(token) for token in self.content_tokens])}]"
-
-        return f"{condition}=>{content}"
-
-
-@dataclass
-class StructureGroup:
-    structure_type: TokenType
-    branches: list[Branch]
-
-    def __repr__(self) -> str:
-        return f"SG::{self.structure_type}{{{', '.join([repr(branch) for branch in self.branches])}}}"
-
-
-@dataclass
-class StatementGroup:
-    tokens: list
-
-    def __repr__(self) -> str:
-        return f"({', '.join([repr(token) for token in self.tokens])})"
-
+class BinOp(Expression):
+    left: Expression
+    op: Token
+    right: Expression
+    def render(self, varbank: VariableBank) -> str:
+        return f"({self.left.render(varbank)} {self.op.value} {self.right.render(varbank)})"
 
 @dataclass
 class Statement:
-    tokens: list
-
-    def __repr__(self) -> str:
-        return f"<{', '.join([repr(token) for token in self.tokens])}>"
-
-    def validate_syntax(self) -> bool:
-        return True
-
     def render(self, varbank: VariableBank) -> str:
-        return ""
-
-
-class CreateStatement(Statement):
-    def __repr__(self) -> str:
-        components = []
-
-        if len(self.tokens) >= 1:
-            components = self.tokens[1:]
-
-        return f"Create::<{', '.join([repr(token) for token in components])}>"
-
-    def validate_syntax(self) -> bool:
-        return (
-                len(self.tokens) >= 4
-                and self.tokens[0].token_type == TokenType.CREATE
-                and self.tokens[1].token_type == TokenType.TYPE
-                and self.tokens[2].token_type == TokenType.VARTYPE
-                and self.tokens[3].token_type == TokenType.IDENTIFIER
-        )
-
-    def render(self, varbank: VariableBank) -> str:
-        var_type_str: str = self.tokens[1].value
-        is_constant: bool = self.tokens[2].value == 'constant'
-        var_name: str = self.tokens[3].value
-        var_value = self.tokens[4:] if len(self.tokens) > 4 else None
-
-        var_type: VariableType
-
-        if var_type_str == 'string':
-            var_type = VariableType.STRING
-        elif var_type_str == 'integer':
-            var_type = VariableType.INTEGER
-        elif var_type_str == 'rational':
-            var_type = VariableType.RATIONAL
-        elif var_type_str == 'boolean':
-            var_type = VariableType.BOOLEAN
-        else:
-            raise Exception(f"Unexpected variable type '{var_type_str}'")
-
-        if var_value is not None:
-            value_type = get_expression_type(parse_expression(var_value), varbank)
-
-            if value_type != var_type:
-                raise Exception(f"Cannot assign value of type {value_type} to identifier of type {var_type}")
-
-        varbank.create(var_name, is_constant, var_type, var_value)
-
-        java_components = []
-
-        if is_constant:
-            java_components.append('final')
-
-        java_components.append(lang_type_to_java_type(var_type))
-        java_components.append(var_name)
-
-        if var_value is not None:
-            java_components.append('=')
-            java_components.append(render_expression(var_value))
-
-        return f"{' '.join(java_components)};"
-
-
-class WriteStatement(Statement):
-    def validate_syntax(self) -> bool:
-        return (
-                len(self.tokens) >= 2
-                and self.tokens[0].token_type == TokenType.WRITE
-                and (
-                    self.tokens[1].token_type == TokenType.STRING
-                    or self.tokens[1].token_type == TokenType.IDENTIFIER
-                )
-        )
-
-    def render(self, varbank: VariableBank) -> str:
-        expression_tokens_for_printf = self.tokens[1:]
-        
-        validate_expression(expression_tokens_for_printf, varbank)
-
-        if not expression_tokens_for_printf:
-            raise ValueError("A lista de tokens para printf não pode estar vazia.")
-        
-        format_string = expression_tokens_for_printf[0].value
-        argument_expression_token_values = [token.value for token in expression_tokens_for_printf[1:]]
-        java_expression_string = "".join(argument_expression_token_values)
-
-        if java_expression_string:
-            final_args_string = f"{format_string}, {java_expression_string}"
-        else:
-            final_args_string = format_string
-                
-        return f"System.out.printf({final_args_string});"
+        raise NotImplementedError
     
-
-class WriteLnStatement(Statement):
-    def validate_syntax(self) -> bool:
-        return (
-                len(self.tokens) >= 2
-                and self.tokens[0].token_type == TokenType.WRITELN
-                and (
-                    self.tokens[1].token_type == TokenType.STRING
-                    or self.tokens[1].token_type == TokenType.IDENTIFIER
-                )
-        )
-
+@dataclass
+class ListLiteral(Expression):
+    elements: list[Expression]
     def render(self, varbank: VariableBank) -> str:
-        expression_tokens_for_printf = self.tokens[1:]
-        
-        validate_expression(expression_tokens_for_printf, varbank)
+        rendered_elements = [elem.render(varbank) for elem in self.elements]
 
-        if not expression_tokens_for_printf:
-            raise ValueError("A lista de tokens para println não pode estar vazia.")
-        
-        format_string = expression_tokens_for_printf[0].value
-        argument_expression_token_values = [token.value for token in expression_tokens_for_printf[1:]]
-        java_expression_string = "".join(argument_expression_token_values)
-
-        if java_expression_string:
-            final_args_string = f"{format_string}, {java_expression_string}"
-        else:
-            final_args_string = format_string
-                
-        return f"System.out.printf({final_args_string});System.out.println();"
-
-
-class SetStatement(Statement):
-    def validate_syntax(self) -> bool:
-        return (
-                len(self.tokens) >= 4
-                and self.tokens[0].token_type == TokenType.SET
-                and self.tokens[1].token_type == TokenType.IDENTIFIER
-                and self.tokens[2].token_type == TokenType.TO
-        )
-
-    def render(self, varbank: VariableBank) -> str:
-        expression_tokens = self.tokens[3:]
-        validate_expression(expression_tokens, varbank)
-
-        var_name = self.tokens[1].value
-
-        varbank.redefine(var_name, expression_tokens)
-
-        return f"{var_name} = {render_expression(expression_tokens)};"
-
-
-class ReadStatement(Statement):
-    def validate_syntax(self) -> bool:
-        return (
-                len(self.tokens) == 2 and
-                self.tokens[0].token_type == TokenType.READ and
-                self.tokens[1].token_type == TokenType.IDENTIFIER
-        )
-
-    def render(self, varbank: VariableBank) -> str:
-        var_name: str = self.tokens[1].value
-
-        variable: Variable = varbank.get(var_name)
-        varbank.redefine(var_name, True)
-
-        method: str
-
-        if variable.vartype == VariableType.STRING:
-            method = "nextLine"
-        elif variable.vartype == VariableType.INTEGER:
-            method = "nextInt"
-        elif variable.vartype == VariableType.RATIONAL:
-            method = "nextFloat"
-        elif variable.vartype == VariableType.BOOLEAN:
-            method = "nextBoolean"
-
-        return f"{var_name} = scanner.{method}();"
-
+        return f"new ArrayList<Object>(Arrays.asList({', '.join(rendered_elements)}))"
 
 @dataclass
-class Structure:
-    branches: list[Branch]
+class ListAccess(Expression):
+    identifier: Token
+    index_expression: Expression
+    def render(self, varbank: VariableBank) -> str:
+        return f"{self.identifier.value}.get({self.index_expression.render(varbank)})"
 
-    def __repr__(self) -> str:
-        return f"STRUCT::[{', '.join([repr(branch) for branch in self.branches])}]"
+@dataclass
+class ListAssignmentStatement(Statement):
+    list_access: ListAccess
+    expression: Expression
+    def render(self, varbank: VariableBank) -> str:
+        list_name = self.list_access.identifier.value
+        index_code = self.list_access.index_expression.render(varbank)
+        value_code = self.expression.render(varbank)
+        
+        return f"{list_name}.set({index_code}, {value_code});"
 
-    def render(self, varbank: VariableBank) -> list[str]:
-        return []
+@dataclass
+class CreateStatement(Statement):
+    vartype: Token
+    const_or_var: Token
+    identifier: Token
+    expression: Expression | None
+    
+    def render(self, varbank: VariableBank) -> str:
+        var_type_map = {
+            'string': VariableType.STRING, 'integer': VariableType.INTEGER,
+            'rational': VariableType.RATIONAL, 'boolean': VariableType.BOOLEAN,
+            'list': VariableType.LIST
+        }
+        lang_type = var_type_map[self.vartype.value]
+        is_constant = self.const_or_var.value == 'constant'
+        var_name = self.identifier.value
 
-    def render_branch(self, varbank: VariableBank, i: int) -> list[str]:
+        varbank.create(var_name, is_constant, lang_type, self.expression is not None)
+
+        java_type_map = {
+            VariableType.STRING: "String", VariableType.INTEGER: "int",
+            VariableType.RATIONAL: "float", VariableType.BOOLEAN: "boolean",
+            VariableType.LIST: "ArrayList<Object>"
+        }
+        java_type = java_type_map[lang_type]
+        
+        parts = []
+        if is_constant:
+            parts.append("final")
+        parts.append(java_type)
+        parts.append(var_name)
+
+        if self.expression:
+            parts.append("=")
+            parts.append(self.expression.render(varbank))
+        elif lang_type == VariableType.LIST:
+            parts.append("=")
+            parts.append("new ArrayList<Object>()")
+            
+        return " ".join(parts) + ";"
+
+@dataclass
+class SetStatement(Statement):
+    identifier: Token
+    expression: Expression
+    def render(self, varbank: VariableBank) -> str:
+        varbank.redefine(self.identifier.value, True)
+        return f"{self.identifier.value} = {self.expression.render(varbank)};"
+
+@dataclass
+class ReadStatement(Statement):
+    identifier: Token
+    def render(self, varbank: VariableBank) -> str:
+        variable = varbank.get(self.identifier.value)
+        varbank.redefine(self.identifier.value, True)
+        
+        method_map = {
+            VariableType.STRING: "nextLine", VariableType.INTEGER: "nextInt",
+            VariableType.RATIONAL: "nextFloat", VariableType.BOOLEAN: "nextBoolean"
+        }
+        method = method_map[variable.vartype]
+        return f"{self.identifier.value} = scanner.{method}();"
+
+@dataclass
+class BaseWriteStatement(Statement):
+    expression: Expression
+    newline: bool = False
+
+    def render(self, varbank: VariableBank) -> str:
+        rendered_expr = self.expression.render(varbank)
+        if self.newline:
+            return f"System.out.println({rendered_expr});"
+        else:
+            return f"System.out.print({rendered_expr});"
+
+class WriteStatement(BaseWriteStatement):
+    def __init__(self, expression: Expression):
+        super().__init__(expression, newline=False)
+
+class WriteLnStatement(BaseWriteStatement):
+    def __init__(self, expression: Expression):
+        super().__init__(expression, newline=True)
+
+@dataclass
+class IfStructure(Statement):
+    conditions: list[Expression]
+    bodies: list[list[Statement]]
+    else_body: list[Statement] | None
+    
+    def render(self, varbank: VariableBank) -> str:
         lines = []
-
+        
         varbank.start_scope()
-
-        for item in self.branches[i].content_tokens:
-            if isinstance(item, Statement):
-                lines.append(item.render(varbank))
-            elif isinstance(item, Structure):
-                lines.extend(item.render(varbank))
-            else:
-                raise Exception(f"Unexpected branch item found {item}")
-
+        lines.append(f"if ({self.conditions[0].render(varbank)}) {{")
+        lines.extend([stmt.render(varbank) for stmt in self.bodies[0]])
         varbank.end_scope()
 
-        return lines
+        for i in range(1, len(self.bodies)):
+            varbank.start_scope()
+            lines.append(f"}} else if ({self.conditions[i].render(varbank)}) {{")
+            lines.extend([stmt.render(varbank) for stmt in self.bodies[i]])
+            varbank.end_scope()
+        
+        if self.else_body is not None:
+            varbank.start_scope()
+            lines.append("} else {")
+            lines.extend([stmt.render(varbank) for stmt in self.else_body])
+            varbank.end_scope()
+        
+        lines.append("}")
+        return "\n".join(lines)
 
-
-class IfStructure(Structure):
-    def render(self, varbank: VariableBank) -> list[str]:
+@dataclass
+class WhileStructure(Statement):
+    condition: Expression
+    body: list[Statement]
+    def render(self, varbank: VariableBank) -> str:
         lines = []
+        varbank.start_scope()
+        lines.append(f"while ({self.condition.render(varbank)}) {{")
+        lines.extend([stmt.render(varbank) for stmt in self.body])
+        lines.append("}")
+        varbank.end_scope()
+        return "\n".join(lines)
 
-        lines.append(f"if ({render_expression(self.branches[0].condition_tokens)}) {OPEN_BRACKET}")
-        lines.extend(self.render_branch(varbank, 0))
+@dataclass
+class DoWhileStructure(Statement):
+    condition: Expression
+    body: list[Statement]
+    def render(self, varbank: VariableBank) -> str:
+        lines = []
+        varbank.start_scope()
+        lines.append("do {")
+        lines.extend([stmt.render(varbank) for stmt in self.body])
+        lines.append(f"}} while ({self.condition.render(varbank)});")
+        varbank.end_scope()
+        return "\n".join(lines)
 
-        for i in range(1, len(self.branches)):
-            branch = self.branches[i]
+class Parser:
+    def __init__(self, tokens: list[Token]):
+        self.tokens = tokens
+        self.pos = 0
 
-            if not branch.condition_tokens:
-                lines.append(f"{CLOSE_BRACKET} else {OPEN_BRACKET}")
+    @property
+    def current_token(self) -> Token:
+        return self.tokens[self.pos]
+
+    def advance(self):
+        self.pos += 1
+
+    def consume(self, expected_type: TokenType):
+        if self.current_token.token_type == expected_type:
+            token = self.current_token
+            self.advance()
+            return token
+        raise ParseException(f"Esperava o token {expected_type.name}, mas encontrou {self.current_token.token_type.name}", self.current_token)
+
+    def parse(self) -> list[Statement]:
+        statements = []
+        while self.current_token.token_type != TokenType.EOF:
+            statements.append(self.parse_statement())
+        return statements
+
+    def parse_block(self) -> list[Statement]:
+        statements = []
+        while self.current_token.token_type not in {TokenType.END, TokenType.ELSE, TokenType.ELIF, TokenType.EOF}:
+             statements.append(self.parse_statement())
+        return statements
+
+    def parse_statement(self) -> Statement:
+        token_type = self.current_token.token_type
+        
+        if token_type == TokenType.CREATE:
+            stmt = self.parse_create_statement()
+        elif token_type == TokenType.SET:
+            stmt = self.parse_set_statement()
+        elif token_type == TokenType.READ:
+            stmt = self.parse_read_statement()
+        elif token_type == TokenType.WRITE:
+            stmt = self.parse_write_statement()
+        elif token_type == TokenType.WRITELN:
+            stmt = self.parse_writeln_statement()
+        elif token_type == TokenType.IF:
+            return self.parse_if_structure()
+        elif token_type == TokenType.WHILE:
+            return self.parse_while_structure()
+        elif token_type == TokenType.DO:
+            return self.parse_do_while_structure()
+        else:
+            raise ParseException("Declaração inválida ou inesperada", self.current_token)
+        
+        self.consume(TokenType.SEMICOLON)
+        return stmt
+
+    def parse_create_statement(self):
+        self.consume(TokenType.CREATE)
+        vartype = self.consume(TokenType.TYPE)
+        const_or_var = self.consume(TokenType.VARTYPE)
+        identifier = self.consume(TokenType.IDENTIFIER)
+        
+        expression = None
+
+        if self.current_token.token_type == TokenType.LBRACKET:
+            if vartype.value != 'list':
+                raise ParseException("A inicialização com '[]' é permitida apenas para o tipo 'list'", self.current_token)
+            expression = self.parse_list_literal()
+        elif self.current_token.token_type != TokenType.SEMICOLON:
+            expression = self.parse_expression()
+            
+        return CreateStatement(vartype, const_or_var, identifier, expression)
+
+    def parse_set_statement(self):
+        self.consume(TokenType.SET)
+
+        target_token = self.current_token
+        if target_token.token_type != TokenType.IDENTIFIER:
+            raise ParseException("O alvo de 'set' deve ser um identificador", target_token)
+        
+        target_expr = self.parse_primary_expression()
+        
+        self.consume(TokenType.TO)
+        value_expression = self.parse_expression()
+
+        if isinstance(target_expr, ListAccess):
+            return ListAssignmentStatement(target_expr, value_expression)
+        elif isinstance(target_expr, Value):
+            return SetStatement(target_expr.token, value_expression)
+        else:
+            raise ParseException("Alvo de atribuição inválido", target_token)
+        
+    def parse_read_statement(self):
+        self.consume(TokenType.READ)
+        identifier = self.consume(TokenType.IDENTIFIER)
+        return ReadStatement(identifier)
+
+    def parse_write_statement(self):
+        self.consume(TokenType.WRITE)
+        expression = self.parse_expression()
+        return WriteStatement(expression)
+    
+    def parse_writeln_statement(self):
+        self.consume(TokenType.WRITELN)
+        expression = self.parse_expression()
+        return WriteLnStatement(expression)
+
+    def parse_if_structure(self):
+        self.consume(TokenType.IF)
+        conditions = [self.parse_expression()]
+        self.consume(TokenType.THEN)
+        bodies = [self.parse_block()]
+        else_body = None
+
+        while self.current_token.token_type == TokenType.ELIF:
+            self.consume(TokenType.ELIF)
+            conditions.append(self.parse_expression())
+            self.consume(TokenType.THEN)
+            bodies.append(self.parse_block())
+            
+        if self.current_token.token_type == TokenType.ELSE:
+            self.consume(TokenType.ELSE)
+            else_body = self.parse_block()
+            
+        self.consume(TokenType.END)
+        return IfStructure(conditions, bodies, else_body)
+    
+    def parse_while_structure(self):
+        self.consume(TokenType.WHILE)
+        condition = self.parse_expression()
+        self.consume(TokenType.DO)
+        body = self.parse_block()
+        self.consume(TokenType.END)
+        return WhileStructure(condition, body)
+
+    def parse_do_while_structure(self):
+        self.consume(TokenType.DO)
+        body = self.parse_block()
+        self.consume(TokenType.WHILE)
+        condition = self.parse_expression()
+        self.consume(TokenType.SEMICOLON)
+        return DoWhileStructure(condition, body)
+    
+    def parse_list_literal(self) -> ListLiteral:
+        self.consume(TokenType.LBRACKET)
+        elements = []
+        if self.current_token.token_type != TokenType.RBRACKET:
+            elements.append(self.parse_expression())
+            while self.current_token.token_type == TokenType.COMMA:
+                self.consume(TokenType.COMMA)
+                elements.append(self.parse_expression())
+        
+        self.consume(TokenType.RBRACKET)
+        return ListLiteral(elements)
+
+    PRECEDENCE = {
+        TokenType.OR: 1, TokenType.AND: 2,
+        TokenType.EQUAL: 3, TokenType.NOT_EQUAL: 3, TokenType.LESS: 3, TokenType.GREATER: 3,
+        TokenType.ADDITION: 4, TokenType.SUBTRACTION: 4,
+        TokenType.MULTIPLICATION: 5, TokenType.DIVISION: 5, TokenType.MODULUS: 5
+    }
+
+    def get_precedence(self, token_type: TokenType):
+        return self.PRECEDENCE.get(token_type, 0)
+
+    def parse_primary_expression(self):
+        token = self.current_token
+        
+        if token.token_type not in LITERAL_AND_IDENTIFIER_TOKENS and token.token_type != TokenType.LPAREN:
+             raise ParseException("Expressão primária inválida", token)
+
+        if token.token_type == TokenType.IDENTIFIER:
+            self.advance()
+            if self.current_token.token_type == TokenType.LBRACKET:
+                self.consume(TokenType.LBRACKET)
+                index_expr = self.parse_expression()
+                self.consume(TokenType.RBRACKET)
+                return ListAccess(token, index_expr)
             else:
-                lines.append(f"{CLOSE_BRACKET} else if ({render_expression(branch.condition_tokens)}) {OPEN_BRACKET}")
+                return Value(token)
+        elif token.token_type in LITERAL_AND_IDENTIFIER_TOKENS:
+            self.advance()
+            return Value(token)
+        elif token.token_type == TokenType.LPAREN:
+            self.consume(TokenType.LPAREN)
+            expr = self.parse_expression()
+            self.consume(TokenType.RPAREN)
+            return expr
 
-            lines.extend(self.render_branch(varbank, i))
+    def parse_expression(self, precedence=0):
+        left_expr = self.parse_primary_expression()
 
-        lines.append(CLOSE_BRACKET)
+        while self.pos < len(self.tokens):
+            op_token = self.current_token
+            op_precedence = self.get_precedence(op_token.token_type)
 
-        return lines
-
-
-class WhileStructure(Structure):
-    def render(self, varbank: VariableBank) -> list[str]:
-        lines = []
-
-        lines.append(f"while ({render_expression(self.branches[0].condition_tokens)}) {OPEN_BRACKET}")
-        lines.extend(self.render_branch(varbank, 0))
-        lines.append(CLOSE_BRACKET)
-
-        return lines
-
-
-class DoWhileStructure(Structure):
-    def render(self, varbank: VariableBank) -> list[str]:
-        lines = []
-
-        lines.append(f"do {OPEN_BRACKET}")
-        lines.extend(self.render_branch(varbank, 0))
-        lines.append(f"{CLOSE_BRACKET} while ({render_expression(self.branches[0].condition_tokens)});")
-
-        return lines
-
-
-def find_next_token(tokens, token_type, offset):
-    for i in range(offset, len(tokens)):
-        if tokens[i].token_type == token_type:
-            return i
-
-    return -1
-
-
-def group_statement(tokens: list, offset: int) -> StatementGroup:
-    statement = []
-
-    statement_end = find_next_token(tokens, TokenType.SEMICOLON, offset)
-
-    if statement_end == -1:
-        raise Exception("statement is never finished")
-
-    return StatementGroup(tokens[offset:statement_end])
-
-
-def group_structures(tokens):
-    i = 0
-
-    stack = []
-    groups = []
-
-    while i < len(tokens):
-        token = tokens[i]
-
-        if token.token_type == TokenType.DO:
-            stack.append(StructureGroup(
-                structure_type=token.token_type,
-                branches=[Branch(condition_tokens=[], content_tokens=[])]
-            ))
-
-            i += 1
-
-            while tokens[i].token_type != TokenType.WHILE:
-                stack[-1].branches[0].content_tokens.append(tokens[i])
-                i += 1
-        elif token.token_type == TokenType.WHILE:
-            stack.append(StructureGroup(
-                structure_type=token.token_type,
-                branches=[Branch(condition_tokens=[], content_tokens=[])]
-            ))
-
-            i += 1
-
-            while tokens[i].token_type != TokenType.DO:
-                stack[-1].branches[0].condition_tokens.append(tokens[i])
-                i += 1
-        elif token.token_type == TokenType.IF:
-            stack.append(StructureGroup(
-                structure_type=token.token_type,
-                branches=[Branch(condition_tokens=[], content_tokens=[])]
-            ))
-
-            i += 1
-
-            while tokens[i].token_type != TokenType.THEN:
-                stack[-1].branches[0].condition_tokens.append(tokens[i])
-                i += 1
-        elif token.token_type in [TokenType.ELIF, TokenType.ELSE]:
-            if not stack or stack[-1].structure_type != TokenType.IF:
-                raise Exception(f"{'elif' if token.token_type == TokenType.ELIF else 'else'} used before an if")
-
-            stack[-1].branches.append(Branch(condition_tokens=[], content_tokens=[]))
-
-            if tokens[i].token_type == TokenType.ELIF:
-                i += 1
-
-                while tokens[i].token_type != TokenType.THEN:
-                    stack[-1].branches[-1].condition_tokens.append(tokens[i])
-                    i += 1
-        elif token.token_type == TokenType.END:
-            if stack[-1].structure_type in STRUCTURE_TOKENS:
-                new_group = stack.pop()
-                if stack:
-                    stack[-1].branches[-1].content_tokens.append(new_group)
-                else:
-                    groups.append(new_group)
-        elif stack and stack[-1].structure_type == TokenType.DO:
-            stack[-1].branches[0].condition_tokens.append(token)
-        elif stack:
-            stack[-1].branches[-1].content_tokens.append(token)
-        else:
-            groups.append(token)
-
-        i += 1
-
-    return groups
-
-
-def group_statements(items):
-    if not items:
-        return items
-
-    groups = []
-
-    i = 0
-
-    while i < len(items):
-        item = items[i]
-
-        if isinstance(item, StructureGroup):
-            for branch in item.branches:
-                branch.content_tokens = group_statements(branch.content_tokens)
-
-            groups.append(item)
-            i += 1
-        else:
-            grouped = group_statement(items, i)
-            groups.append(grouped)
-            i += len(grouped.tokens) + 1
-
-    return groups
-
-
-def build_statement(group: StatementGroup) -> Statement:
-    statement: Statement
-
-    if group.tokens[0].token_type == TokenType.CREATE:
-        statement = CreateStatement(group.tokens)
-    elif group.tokens[0].token_type == TokenType.WRITE:
-        statement = WriteStatement(group.tokens)
-    elif group.tokens[0].token_type == TokenType.WRITELN:
-        statement = WriteLnStatement(group.tokens)
-    elif group.tokens[0].token_type == TokenType.READ:
-        statement = ReadStatement(group.tokens)
-    elif group.tokens[0].token_type == TokenType.SET:
-        statement = SetStatement(group.tokens)
-    else:
-        raise Exception(f"Unexpected token type '{group.tokens[0].token_type}'")
-
-    if not statement.validate_syntax():
-        raise Exception(f"Invalid syntax for token type '{group.tokens[0].token_type}'")
-
-    return statement
-
-
-def synthesize_statements(items): # -> list[Structure | Statement]
-    elements = []
-
-    i = 0
-
-    while i < len(items):
-        item = items[i]
-
-        if isinstance(item, StructureGroup):
-            structure: Structure
-
-            if item.structure_type == TokenType.IF:
-                structure = IfStructure(branches=[])
-            elif item.structure_type == TokenType.DO:
-                structure = DoWhileStructure(branches=[])
-            elif item.structure_type == TokenType.WHILE:
-                structure = WhileStructure(branches=[])
-
-            for branch in item.branches:
-                structure.branches.append(Branch(
-                    condition_tokens=branch.condition_tokens,
-                    content_tokens=synthesize_statements(branch.content_tokens)
-                ))
-
-            elements.append(structure)
-        elif isinstance(item, StatementGroup):
-            if len(item.tokens) == 0:
-                raise Exception("Unexpected empty statement group")
-
-            elements.append(build_statement(item))
-        else:
-            raise Exception(f"Unexpected ungrouped element {item}")
-
-        i += 1
-
-    return elements
+            if op_precedence <= precedence:
+                break
+                
+            self.advance()
+            right_expr = self.parse_expression(op_precedence)
+            left_expr = BinOp(left_expr, op_token, right_expr)
+        
+        return left_expr

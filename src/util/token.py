@@ -1,10 +1,10 @@
 from enum import Enum, auto
 
-
 class TokenType(Enum):
     # Specials
     NONE = auto()
     SKIP = auto()
+    EOF = auto()
 
     # Operators
     NOT            = auto()
@@ -25,6 +25,7 @@ class TokenType(Enum):
     RATIONAL = auto()
     INTEGER  = auto()
     STRING   = auto()
+    LIST     = auto()
 
     # Delimiters
     LPAREN    = auto()
@@ -32,6 +33,8 @@ class TokenType(Enum):
     SEMICOLON = auto()
     COMMA     = auto()
     COLON     = auto()
+    LBRACKET  = auto()
+    RBRACKET  = auto()
 
     # Types
     TYPE = auto()
@@ -54,73 +57,32 @@ class TokenType(Enum):
 
     IDENTIFIER = auto()
 
-
 STRUCTURE_TOKENS = [
-    TokenType.IF,
-    TokenType.ELIF,
-    TokenType.ELSE,
-    TokenType.DO,
-    TokenType.WHILE
+    TokenType.IF, TokenType.ELIF, TokenType.ELSE,
+    TokenType.DO, TokenType.WHILE
 ]
-
 OPERATOR_TOKENS = [
-    TokenType.NOT,
-    TokenType.AND,
-    TokenType.OR,
-    TokenType.ADDITION,
-    TokenType.DIVISION,
-    TokenType.EQUAL,
-    TokenType.GREATER,
-    TokenType.LESS,
-    TokenType.MODULUS,
-    TokenType.MULTIPLICATION,
-    TokenType.NOT_EQUAL,
-    TokenType.SUBTRACTION,
+    TokenType.NOT, TokenType.AND, TokenType.OR, TokenType.ADDITION, TokenType.DIVISION,
+    TokenType.EQUAL, TokenType.GREATER, TokenType.LESS, TokenType.MODULUS,
+    TokenType.MULTIPLICATION, TokenType.NOT_EQUAL, TokenType.SUBTRACTION,
 ]
-
 BOOLEAN_OPERATOR_TOKENS = [
-    TokenType.NOT,
-    TokenType.AND,
-    TokenType.OR,
-    TokenType.EQUAL,
-    TokenType.GREATER,
-    TokenType.LESS,
-    TokenType.NOT_EQUAL,
+    TokenType.NOT, TokenType.AND, TokenType.OR, TokenType.EQUAL,
+    TokenType.GREATER, TokenType.LESS, TokenType.NOT_EQUAL,
 ]
-
 NUMERIC_OPERATOR_TOKENS = [
-    TokenType.ADDITION,
-    TokenType.DIVISION,
-    TokenType.MODULUS,
-    TokenType.MULTIPLICATION,
-    TokenType.SUBTRACTION,
+    TokenType.ADDITION, TokenType.DIVISION, TokenType.MODULUS,
+    TokenType.MULTIPLICATION, TokenType.SUBTRACTION,
 ]
-
 LITERAL_TOKENS = [
-    TokenType.BOOLEAN,
-    TokenType.RATIONAL,
-    TokenType.INTEGER,
-    TokenType.STRING,
+    TokenType.BOOLEAN, TokenType.RATIONAL, TokenType.INTEGER,
+    TokenType.STRING, TokenType.LIST,
 ]
-
 INVALID_EXPRESSION_TOKENS = [
-    TokenType.TYPE,
-    TokenType.VARTYPE,
-    TokenType.CREATE,
-    TokenType.DO,
-    TokenType.ELIF,
-    TokenType.ELSE,
-    TokenType.IF,
-    TokenType.READ,
-    TokenType.SET,
-    TokenType.TO,
-    TokenType.WHILE,
-    TokenType.WRITE,
-    TokenType.WRITELN,
-    TokenType.END,
-    TokenType.THEN,
+    TokenType.TYPE, TokenType.VARTYPE, TokenType.CREATE, TokenType.DO, TokenType.ELIF,
+    TokenType.ELSE, TokenType.IF, TokenType.READ, TokenType.SET, TokenType.TO,
+    TokenType.WHILE, TokenType.WRITE, TokenType.WRITELN, TokenType.END, TokenType.THEN,
 ]
-
 
 class Token:
     def __init__(self, token_type, value, line, column):
@@ -130,4 +92,4 @@ class Token:
         self.column     = column
 
     def __repr__(self):
-        return f"T({self.token_type}, {repr(self.value)})"
+        return f"T({self.token_type.name}, {repr(self.value)})"
