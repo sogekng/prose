@@ -1,0 +1,2 @@
+# Este código agora vai gerar um erro de ParseException
+create integer variable x to "olá mundo";

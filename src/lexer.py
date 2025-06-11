@@ -7,15 +7,20 @@ token_regex = {
     TokenType.INTEGER:        re.compile(r'\d+'),
     TokenType.BOOLEAN:        re.compile(r'\b(true|false)\b'),
     TokenType.STRING:         re.compile(r'"([^"\\]|\\.)*"'),
-    TokenType.TYPE:           re.compile(r'\b(string|integer|rational|boolean|list)\b'),
+    
+    TokenType.TYPE_KEYWORD:   re.compile(r'\btype\b'), # Regra para a palavra-chave 'type'
+    TokenType.TYPE:           re.compile(r'\b(string|integer|rational|boolean|list|void)\b'),
     TokenType.VARTYPE:        re.compile(r'\b(constant|variable)\b'),
+    
     TokenType.CREATE:         re.compile(r'\bcreate\b'),
     TokenType.DO:             re.compile(r'\bdo\b'),
     TokenType.ELSE:           re.compile(r'\belse\b'),
     TokenType.ELIF:           re.compile(r'\belif\b'),
     TokenType.END:            re.compile(r'\bend\b'),
+    TokenType.FOR:            re.compile(r'\bfor\b'),
     TokenType.FUNCTION:       re.compile(r'\bfunction\b'),
     TokenType.IF:             re.compile(r'\bif\b'),
+    TokenType.IN:             re.compile(r'\bin\b'),
     TokenType.READ:           re.compile(r'\bread\b'),
     TokenType.RETURN:         re.compile(r'\breturn\b'),
     TokenType.SET:            re.compile(r'\bset\b'),
@@ -24,10 +29,15 @@ token_regex = {
     TokenType.WHILE:          re.compile(r'\bwhile\b'),
     TokenType.WRITE:          re.compile(r'\bwrite\b'),
     TokenType.WRITELN:        re.compile(r'\bwriteln\b'),
+
+    TokenType.GREATER_EQUAL:  re.compile(r'>='),
+    TokenType.LESS_EQUAL:     re.compile(r'<='),
+    TokenType.ARROW:          re.compile(r'->'),
     TokenType.EQUAL:          re.compile(r'=='),
     TokenType.NOT_EQUAL:      re.compile(r'!='),
     TokenType.AND:            re.compile(r'&&'),
     TokenType.OR:             re.compile(r'\|\|'),
+    
     TokenType.GREATER:        re.compile(r'>'),
     TokenType.LESS:           re.compile(r'<'),
     TokenType.NOT:            re.compile(r'!'),
@@ -43,6 +53,7 @@ token_regex = {
     TokenType.SEMICOLON:      re.compile(r';'),
     TokenType.COMMA:          re.compile(r','),
     TokenType.COLON:          re.compile(r':'),
+    TokenType.DOT:            re.compile(r'\.'),
     TokenType.IDENTIFIER:     re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*'),
 }
 

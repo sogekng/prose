@@ -1,93 +1,204 @@
-# --- suite_de_testes.prose ---
-# Este arquivo testa todas as funcionalidades da linguagem Prose.
+# -----------------------------------------------------------------------------
+# Arquivo de Teste Abrangente para a Linguagem Prose
+# -----------------------------------------------------------------------------
+# Este arquivo testa todas as principais funcionalidades do transpilador,
+# incluindo tipos, operadores, estruturas de controle, I/O, funções
+# definidas pelo usuário e funções nativas de listas e strings.
+# -----------------------------------------------------------------------------
 
-# Seção 1: Declarações e Saída Básica
-writeln "--- 1. Teste de Variaveis e Constantes ---";
-create integer variable contador 10;
-create rational constant PI 3.14;
-create string variable saudacao "Ola";
-create boolean variable esta_chovendo false;
-
-writeln "Valor do contador (integer): " + contador;
-writeln "Valor de PI (rational constant): " + PI;
-writeln "Saudacao (string): " + saudacao;
-writeln "Esta chovendo? (boolean): " + esta_chovendo;
+writeln "--- INICIO DOS TESTES ABRANGENTES ---";
 writeln "";
 
-# Seção 2: Expressões e Atribuições
-writeln "--- 2. Teste de Expressoes e Atribuicoes ---";
-create integer variable resultado_expr;
-set resultado_expr to (5 + 3) * 2; # Deve ser 16
-writeln "(5 + 3) * 2 = " + resultado_expr;
 
-set saudacao to saudacao + ", Mundo!"; # Concatenação de string
-writeln "Nova saudacao: " + saudacao;
+# --- 1. Teste de Variáveis, Constantes e Tipos de Dados ---
+writeln "--- Seção 1: Variáveis e Tipos de Dados ---";
+
+# Declaração e inicialização de variáveis e constantes
+create integer constant ANO_ATUAL to 2024;
+create rational variable PI to 3.14159;
+create boolean variable TESTE_PASSOU to true;
+create string variable MENSAGEM to "Prose e uma linguagem funcional!";
+
+writeln "Constante ANO_ATUAL: " + ANO_ATUAL;
+writeln "Variavel PI: " + PI;
+writeln "Variavel booleana: " + TESTE_PASSOU;
+writeln "Mensagem inicial: " + MENSAGEM;
+
+# Teste de reatribuição (set)
+set MENSAGEM to "A reatribuicao funciona!";
+writeln "Mensagem apos 'set': " + MENSAGEM;
 writeln "";
 
-# Seção 3: Listas
-writeln "--- 3. Teste de Listas ---";
-create list variable numeros [100, 200, 300];
-writeln "Elemento inicial da lista na posicao 1: " + numeros[1];
-set numeros[1] to 250;
-writeln "Elemento alterado na posicao 1: " + numeros[1];
+
+# --- 2. Teste de Operadores e Expressões ---
+writeln "--- Seção 2: Operadores e Expressões ---";
+
+create integer variable a to 10;
+create integer variable b to 3;
+create rational variable c to 2.5;
+
+writeln "a = 10, b = 3, c = 2.5";
+writeln "a + b * 2 = " + (a + b * 2);      # Teste de precedência
+writeln "a / b = " + (a / b);              # Divisão de inteiros
+writeln "a % b = " + (a % b);              # Módulo
+writeln "a / c = " + (a / c);              # Divisão com racional
+writeln "(true && false) || true = " + ((true && false) || true); # Lógica
+writeln "a >= b == " + (a >= b);
+writeln "a <= 10 == " + (a <= 10);
 writeln "";
 
-# Seção 4: Estruturas de Controle (Condicionais)
-writeln "--- 4. Teste de Condicionais (if/elif/else) ---";
-set contador to 5;
-if contador > 10 then
-    writeln "Contador e maior que 10.";
-elif contador == 5 then
-    writeln "Contador e exatamente 5. Condicao correta!";
+
+# --- 3. Teste de Estruturas de Controle de Fluxo ---
+writeln "--- Seção 3: Estruturas de Controle ---";
+
+# Teste IF-ELIF-ELSE
+create integer variable nota to 85;
+if nota >= 90 then
+    writeln "Nota " + nota + ": Conceito A";
+elif nota >= 80 then
+    writeln "Nota " + nota + ": Conceito B";
+elif nota >= 70 then
+    writeln "Nota " + nota + ": Conceito C";
 else
-    writeln "Contador e menor que 10.";
-end
-writeln "";
-
-# Seção 5: Funções
-writeln "--- 5. Teste de Funcoes ---";
-
-# Função com retorno
-function multiplicar(x, y)
-    return x * y;
+    writeln "Nota " + nota + ": Conceito D";
 end
 
-# Função sem retorno explícito (procedimento)
-function imprimir_status(status)
-    writeln "Status atual: " + status;
+# Teste WHILE
+writeln "Contagem regressiva com 'while':";
+set a to 3;
+while a > 0 do
+    write a + "... ";
+    set a to a - 1;
 end
+writeln "Fim!";
 
-create integer variable produto;
-set produto to multiplicar(7, 6);
-writeln "Resultado de multiplicar(7, 6): " + produto;
-imprimir_status("Testes de funcao concluidos");
-writeln "";
-
-# Seção 6: Laços de Repetição
-writeln "--- 6. Teste de Lacos de Repeticao ---";
-
-# Laço while
-writeln "Contando de 1 a 3 com 'while':";
-create integer variable i 1;
-while i < 4 do
-    write " " + i;
-    set i to i + 1;
-end
-writeln ""; # Apenas para pular linha no final
-
-# Laço do-while
-writeln "Contando de 1 a 3 com 'do-while':";
-set i to 1;
+# Teste DO-WHILE
+writeln "Contagem com 'do-while':";
+set b to 0;
 do
-    write " " + i;
-    set i to i + 1;
-while i < 4 end
-writeln ""; # Apenas para pular linha no final
+    set b to b + 1;
+    write b + " ";
+while b < 3 end
 writeln "";
 
-# Seção 7: Entrada do Usuário
-writeln "--- 7. Teste de Entrada do Usuario ---";
-write "Por favor, digite seu nome: ";
+# Teste do Laço FOR
+writeln "Iterando sobre a lista de frutas:";
+create list<string> variable frutas to ["Manga", "Uva", "Kiwi"];
+
+for fruta in frutas do
+    writeln "  - Fruta da vez: " + fruta;
+end
+
+writeln "Fim da iteração.";
+writeln "";
+
+
+# --- 4. Teste de Funções Definidas pelo Usuário ---
+writeln "--- Seção 4: Funções do Usuário ---";
+
+# Função com retorno: cálculo de fatorial
+function fatorial(integer n) -> integer
+    if n == 0 then
+        return 1;
+    else
+        return n * fatorial(n - 1);
+    end
+end
+
+# Procedimento sem retorno (void)
+function exibir_separador() -> void
+    writeln "=====================================";
+end
+
+exibir_separador();
+writeln "O fatorial de 5 e: " + fatorial(5);
+exibir_separador();
+writeln "";
+
+
+# --- 5. Teste de Listas Tipadas e Funções Nativas de Lista ---
+writeln "--- Seção 5: Listas e Funções Nativas ---";
+
+create list<string> variable minha_lista_de_compras;
+add(minha_lista_de_compras, "Maca");
+add(minha_lista_de_compras, "Banana");
+add(minha_lista_de_compras, "Laranja");
+
+writeln "A lista tem " + length(minha_lista_de_compras) + " itens.";
+
+create string variable segundo_item;
+set segundo_item to get(minha_lista_de_compras, 1);
+writeln "O segundo item da lista e: " + segundo_item;
+
+remove(minha_lista_de_compras, 0);
+writeln "Apos remover o primeiro item, a lista tem " + length(minha_lista_de_compras) + " itens.";
+set segundo_item to get(minha_lista_de_compras, 0);
+writeln "O novo primeiro item e: " + segundo_item;
+writeln "";
+
+
+# --- 6. Teste de Funções Nativas de String ---
+writeln "--- Seção 6: Funções Nativas de String ---";
+create string variable texto_original to "Linguagem Prose";
+writeln "Original: " + texto_original;
+writeln "Maiusculas: " + uppercase(texto_original);
+writeln "Minusculas: " + lowercase(texto_original);
+writeln "Substring(10, 15): " + substring(texto_original, 10, 15);
+writeln "";
+
+
+# --- 7. Teste de Entrada de Dados (I/O) ---
+writeln "--- Seção 7: Entrada de Dados ---";
+
 create string variable nome_usuario;
-read nome_usuario;
-writeln "Ola, " + nome_usuario + "! O programa foi um sucesso.";
+create integer variable idade_usuario;
+
+readme nome_usuario "Por favor, digite seu nome: ";
+readme idade_usuario "Agora, digite sua idade: ";
+
+writeln "";
+
+# --- 8. Teste de Estruturas (Structs) ---
+writeln "--- Seção 8: Teste de Estruturas (Structs) ---";
+
+# Definição de um novo tipo 'Pessoa'
+create type Pessoa (
+    string nome,
+    integer idade
+);
+
+# Criação de uma instância da struct
+create Pessoa variable p1;
+
+# Atribuição de valores aos membros da struct
+set p1.nome to nome_usuario;
+set p1.idade to idade_usuario;
+
+# Leitura e exibição dos membros
+writeln "Dados da Pessoa:";
+writeln "Nome: " + p1.nome;
+writeln "Idade: " + p1.idade;
+writeln "";
+
+# --- 9. Teste de Lista de Estruturas ---
+writeln "--- Seção 9: Teste de Lista de Estruturas ---";
+
+create list<Pessoa> variable agenda;
+
+# Cria uma segunda pessoa
+create Pessoa variable p2;
+set p2.nome to "Beatriz";
+set p2.idade to 28;
+
+# Adiciona as pessoas na agenda
+add(agenda, p1);
+add(agenda, p2);
+
+writeln "Iterando sobre a lista de Pessoas na agenda:";
+for contato in agenda do
+    writeln "  -> Contato: " + contato.nome + " (" + contato.idade + " anos)";
+end
+writeln "";
+
+
+writeln "--- FIM DOS TESTES ABRANGENTES ---";

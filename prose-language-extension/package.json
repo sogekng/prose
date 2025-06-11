@@ -2,7 +2,7 @@
   "name": "prose-language-support",
   "displayName": "Prose Language Support",
   "description": "Syntax highlighting for the Prose language",
-  "version": "0.0.1",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.80.0" 
   },

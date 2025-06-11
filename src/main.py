@@ -3,15 +3,15 @@ import os
 import subprocess
 from util.token import TokenType
 from lexer import Lexer
-from parsa import Parser, ParseException, FunctionDeclaration, ExpressionStatement
+from parsa import Parser, ParseException, FunctionDeclaration, StructDefinition
 from render import VariableBank
 
 os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 sys.dont_write_bytecode = True
 
 EXTENSION = "prose"
-VERSION = "1.0.4"
-USAGE = f"Uso: python main.py <arquivo_de_entrada.{EXTENSION}>"
+VERSION = "1.1.0"
+USAGE = f"Uso: prose <arquivo_de_entrada.{EXTENSION}>"
 
 JAVAC_COMMAND = "javac"
 JAVA_COMMAND = "java"
@@ -47,16 +47,20 @@ def main():
         parser = Parser(tokens)
         syntax_tree = parser.parse()
 
-        varbank = VariableBank()
+        varbank = parser.varbank
+        struct_definitions = []
         function_definitions = []
         main_method_statements = []
 
         for node in syntax_tree:
-            if isinstance(node, FunctionDeclaration):
+            if isinstance(node, StructDefinition):
+                struct_definitions.append(node.render(varbank))
+            elif isinstance(node, FunctionDeclaration):
                 function_definitions.append(node.render(varbank))
             else:
                 main_method_statements.append(node.render(varbank))
         
+        java_structs_code = "\n\n".join(struct_definitions)
         java_functions_code = "\n\n".join(function_definitions)
         java_main_code = "\n".join(main_method_statements)
 
@@ -66,6 +70,15 @@ def main():
             output_file.write("import java.util.Arrays;\n\n")
             
             output_file.write(f"public class {program_name} {{\n\n")
+
+            if java_structs_code:
+                output_file.write(java_structs_code)
+                output_file.write("\n\n")
+
+            output_file.write("    public static String readme(String prompt, Scanner scanner) {\n")
+            output_file.write("        System.out.print(prompt);\n")
+            output_file.write("        return scanner.nextLine();\n")
+            output_file.write("    }\n\n")
 
             if java_functions_code:
                 output_file.write(java_functions_code)

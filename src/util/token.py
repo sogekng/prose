@@ -11,7 +11,9 @@ class TokenType(Enum):
     DIVISION = auto()
     EQUAL = auto()
     GREATER = auto()
+    GREATER_EQUAL = auto()
     LESS = auto()
+    LESS_EQUAL = auto()
     MODULUS = auto()
     MULTIPLICATION = auto()
     NOT_EQUAL = auto()
@@ -28,7 +30,9 @@ class TokenType(Enum):
     COLON = auto()
     LBRACKET = auto()
     RBRACKET = auto()
+    ARROW = auto()
     TYPE = auto()
+    TYPE_KEYWORD = auto()
     VARTYPE = auto()
     CREATE = auto()
     DO = auto()
@@ -45,7 +49,11 @@ class TokenType(Enum):
     THEN = auto()
     FUNCTION = auto()
     RETURN = auto()
+    VOID = auto()
     IDENTIFIER = auto()
+    DOT = auto()
+    FOR = auto()
+    IN = auto()
 
 class Token:
     def __init__(self, token_type, value, line, column):
