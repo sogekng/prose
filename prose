@@ -1,0 +1,11 @@
+#!/bin/bash
+# Esta versão corrigida resolve o caminho do script original,
+# ignorando a localização do atalho (link simbólico).
+
+# Encontra o caminho real do script original
+REAL_PATH=$(readlink -f "${BASH_SOURCE[0]}")
+# Pega o diretório onde o script original está
+SCRIPT_DIR=$(dirname -- "$REAL_PATH")
+
+# Executa o transpilador em Python usando o caminho correto
+python3 "$SCRIPT_DIR/src/main.py" "$@"

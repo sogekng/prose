@@ -7,8 +7,6 @@ class VariableType(Enum):
     BOOLEAN  = auto()
     LIST     = auto()
 
-NUMERIC_TYPES = {VariableType.INTEGER, VariableType.RATIONAL}
-
 class Variable:
     def __init__(self, constant: bool, vartype: VariableType, value):
         self.constant = constant
@@ -18,6 +16,7 @@ class Variable:
 class VariableBank:
     def __init__(self):
         self.scopes: list[dict[str, Variable]] = [{}]
+        self.functions: dict[str, int] = {}
 
     def start_scope(self) -> None:
         self.scopes.append({})
@@ -47,3 +46,13 @@ class VariableBank:
         if variable.constant:
             raise Exception(f"Não é possível alterar o valor da constante '{name}'")
         variable.value = value
+
+    def create_function(self, name: str, num_params: int):
+        if name in self.functions:
+            raise Exception(f"Redeclaração da função '{name}'")
+        self.functions[name] = num_params
+
+    def get_function_arity(self, name: str) -> int:
+        if name not in self.functions:
+            raise Exception(f"Tentativa de chamar função não declarada '{name}'")
+        return self.functions[name]

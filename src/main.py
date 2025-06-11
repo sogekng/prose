@@ -1,9 +1,10 @@
-from lexer import Lexer
-from parsa import Parser, ParseException
-from render import VariableBank
 import sys
 import os
 import subprocess
+from util.token import TokenType
+from lexer import Lexer
+from parsa import Parser, ParseException, FunctionDeclaration, ExpressionStatement
+from render import VariableBank
 
 os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 sys.dont_write_bytecode = True
@@ -47,18 +48,32 @@ def main():
         syntax_tree = parser.parse()
 
         varbank = VariableBank()
-        java_lines = [node.render(varbank) for node in syntax_tree]
-        java_code = "\n".join(java_lines)
+        function_definitions = []
+        main_method_statements = []
+
+        for node in syntax_tree:
+            if isinstance(node, FunctionDeclaration):
+                function_definitions.append(node.render(varbank))
+            else:
+                main_method_statements.append(node.render(varbank))
+        
+        java_functions_code = "\n\n".join(function_definitions)
+        java_main_code = "\n".join(main_method_statements)
 
         with open(output_path, 'w', encoding='utf-8') as output_file:
             output_file.write("import java.util.Scanner;\n")
             output_file.write("import java.util.ArrayList;\n")
             output_file.write("import java.util.Arrays;\n\n")
             
-            output_file.write(f"public class {program_name} {{\n")
+            output_file.write(f"public class {program_name} {{\n\n")
+
+            if java_functions_code:
+                output_file.write(java_functions_code)
+                output_file.write("\n\n")
+
             output_file.write("    public static void main(String[] args) {\n")
             output_file.write("        try (Scanner scanner = new Scanner(System.in)) {\n")
-            for line in java_code.split('\n'):
+            for line in java_main_code.split('\n'):
                  output_file.write(f"            {line}\n")
             output_file.write("        }\n")
             output_file.write("    }\n")
@@ -71,13 +86,11 @@ def main():
             print("--- Erro de Compilação Java ---")
             print(compile_process.stderr)
             return
-
-        execute_process = subprocess.run(
-            [JAVA_COMMAND, "-cp", procache_dir, program_name], 
-            capture_output=True, text=True, encoding='utf-8', check=True
-        )
         
-        print(execute_process.stdout, end='')
+        subprocess.run(
+            [JAVA_COMMAND, "-cp", procache_dir, program_name], 
+            text=True, encoding='utf-8', check=True
+        )
 
     except FileNotFoundError:
         print(f"Erro: Comando não encontrado. Verifique se o Java (JDK) está instalado e no PATH.")

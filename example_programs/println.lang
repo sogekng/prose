@@ -1,9 +1,0 @@
-writeln "%d == 2" (1 + 1); # should be 2
-writeln "%d == 0" (1 - 1); # should be 0
-writeln "%d == 1" (1 * 1); # should be 1
-writeln "%d == 5" (10 / 2); # should be 5
-writeln "%d == 7" (5 + 1 * 2); # should be 7
-writeln "%d == 4" (5 / 2 + 1 * 2); # should be 4
-writeln "%d == 8" (5 / 2 + 1 * 2 * 3); # should be 8
-writeln "%d == 7" (2 / 2 + 1 * 2 * 3); # should be 7
-writeln "%d == 0" (2 / (2 + 1) * 2 * 3); # should be 0

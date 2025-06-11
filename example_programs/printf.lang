@@ -1,3 +1,0 @@
-create string constant str_world "World";
-
-write "Hello %s!" str_world;

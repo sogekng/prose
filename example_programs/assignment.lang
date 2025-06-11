@@ -1,5 +1,0 @@
-create string variable test_string "Abigail";
-set test_string to "Sentiment";
-
-# create string constant const_string "Unchangeable";
-# set const_string to "Banana"; # Error: unable to assign to constant variable

@@ -1,8 +1,0 @@
-create string variable a "String A";
-create string constant b "String B";
-create integer variable c 1;
-create integer constant d 2;
-create rational variable e 1.0;
-create rational constant f 2.0;
-create boolean variable g true;
-create boolean constant h false;

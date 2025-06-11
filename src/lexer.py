@@ -14,8 +14,10 @@ token_regex = {
     TokenType.ELSE:           re.compile(r'\belse\b'),
     TokenType.ELIF:           re.compile(r'\belif\b'),
     TokenType.END:            re.compile(r'\bend\b'),
+    TokenType.FUNCTION:       re.compile(r'\bfunction\b'),
     TokenType.IF:             re.compile(r'\bif\b'),
     TokenType.READ:           re.compile(r'\bread\b'),
+    TokenType.RETURN:         re.compile(r'\breturn\b'),
     TokenType.SET:            re.compile(r'\bset\b'),
     TokenType.THEN:           re.compile(r'\bthen\b'),
     TokenType.TO:             re.compile(r'\bto\b'),
@@ -45,9 +47,6 @@ token_regex = {
 }
 
 class Lexer:
-    """
-    Classe Lexer para realizar a análise léxica (tokenização).
-    """
     def __init__(self):
         self.text = ""
         self.pos = 0

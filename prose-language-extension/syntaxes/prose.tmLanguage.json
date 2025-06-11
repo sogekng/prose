@@ -1,0 +1,87 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Prose",
+  "scopeName": "source.prose",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#booleans"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.prose",
+          "match": "#.*"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.prose",
+          "match": "\\b(if|then|else|elif|while|do|end|return|function)\\b"
+        },
+        {
+          "name": "keyword.operator.prose",
+          "match": "\\b(to)\\b"
+        },
+        {
+          "name": "storage.type.prose",
+          "match": "\\b(create|set|read|write|writeln)\\b"
+        },
+        {
+          "name": "storage.modifier.prose",
+          "match": "\\b(variable|constant)\\b"
+        },
+        {
+          "name": "support.type.prose",
+          "match": "\\b(integer|rational|string|boolean|list)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.prose",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.prose",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.prose",
+          "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.prose",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "booleans": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.prose",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    }
+  }
+}

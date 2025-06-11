@@ -1,0 +1,93 @@
+# --- suite_de_testes.prose ---
+# Este arquivo testa todas as funcionalidades da linguagem Prose.
+
+# Seção 1: Declarações e Saída Básica
+writeln "--- 1. Teste de Variaveis e Constantes ---";
+create integer variable contador 10;
+create rational constant PI 3.14;
+create string variable saudacao "Ola";
+create boolean variable esta_chovendo false;
+
+writeln "Valor do contador (integer): " + contador;
+writeln "Valor de PI (rational constant): " + PI;
+writeln "Saudacao (string): " + saudacao;
+writeln "Esta chovendo? (boolean): " + esta_chovendo;
+writeln "";
+
+# Seção 2: Expressões e Atribuições
+writeln "--- 2. Teste de Expressoes e Atribuicoes ---";
+create integer variable resultado_expr;
+set resultado_expr to (5 + 3) * 2; # Deve ser 16
+writeln "(5 + 3) * 2 = " + resultado_expr;
+
+set saudacao to saudacao + ", Mundo!"; # Concatenação de string
+writeln "Nova saudacao: " + saudacao;
+writeln "";
+
+# Seção 3: Listas
+writeln "--- 3. Teste de Listas ---";
+create list variable numeros [100, 200, 300];
+writeln "Elemento inicial da lista na posicao 1: " + numeros[1];
+set numeros[1] to 250;
+writeln "Elemento alterado na posicao 1: " + numeros[1];
+writeln "";
+
+# Seção 4: Estruturas de Controle (Condicionais)
+writeln "--- 4. Teste de Condicionais (if/elif/else) ---";
+set contador to 5;
+if contador > 10 then
+    writeln "Contador e maior que 10.";
+elif contador == 5 then
+    writeln "Contador e exatamente 5. Condicao correta!";
+else
+    writeln "Contador e menor que 10.";
+end
+writeln "";
+
+# Seção 5: Funções
+writeln "--- 5. Teste de Funcoes ---";
+
+# Função com retorno
+function multiplicar(x, y)
+    return x * y;
+end
+
+# Função sem retorno explícito (procedimento)
+function imprimir_status(status)
+    writeln "Status atual: " + status;
+end
+
+create integer variable produto;
+set produto to multiplicar(7, 6);
+writeln "Resultado de multiplicar(7, 6): " + produto;
+imprimir_status("Testes de funcao concluidos");
+writeln "";
+
+# Seção 6: Laços de Repetição
+writeln "--- 6. Teste de Lacos de Repeticao ---";
+
+# Laço while
+writeln "Contando de 1 a 3 com 'while':";
+create integer variable i 1;
+while i < 4 do
+    write " " + i;
+    set i to i + 1;
+end
+writeln ""; # Apenas para pular linha no final
+
+# Laço do-while
+writeln "Contando de 1 a 3 com 'do-while':";
+set i to 1;
+do
+    write " " + i;
+    set i to i + 1;
+while i < 4 end
+writeln ""; # Apenas para pular linha no final
+writeln "";
+
+# Seção 7: Entrada do Usuário
+writeln "--- 7. Teste de Entrada do Usuario ---";
+write "Por favor, digite seu nome: ";
+create string variable nome_usuario;
+read nome_usuario;
+writeln "Ola, " + nome_usuario + "! O programa foi um sucesso.";

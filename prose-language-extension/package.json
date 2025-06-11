@@ -1,0 +1,38 @@
+{
+  "name": "prose-language-support",
+  "displayName": "Prose Language Support",
+  "description": "Syntax highlighting for the Prose language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0" 
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sogekng/.prose.git"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "prose",
+        "aliases": [
+          "Prose",
+          "prose"
+        ],
+        "extensions": [
+          ".prose"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "prose",
+        "scopeName": "source.prose",
+        "path": "./syntaxes/prose.tmLanguage.json"
+      }
+    ]
+  }
+}

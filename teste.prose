@@ -1,14 +1,1 @@
-create list variable numeros [10, 20, 30];
-
-writeln "Testando listas!";
-writeln "Primeiro elemento:";
-writeln numeros[0];
-
-writeln "Alterando o segundo elemento para 99...";
-set numeros[1] to 99;
-
-writeln "Segundo elemento agora e:";
-writeln numeros[1];
-
-writeln "A lista inteira:";
-writeln numeros;
+writeln "Hello World!";
