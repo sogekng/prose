@@ -24,7 +24,6 @@ procache/
 
 # Arquivos de build do PyInstaller
 build/
-dist/
 *.spec
 
 # Outros arquivos específicos do macOS

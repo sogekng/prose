@@ -39,6 +39,8 @@ class TokenType(Enum):
     ELIF = auto()
     ELSE = auto()
     IF = auto()
+    FROM = auto()
+    IMPORT = auto()
     READ = auto()
     SET = auto()
     TO = auto()
@@ -61,6 +63,4 @@ class Token:
         self.value = value
         self.line = line
         self.column = column
-
-    def __repr__(self):
-        return f"T({self.token_type.name}, {repr(self.value)})"
+    def __repr__(self): return f"T({self.token_type.name}, {repr(self.value)})"

@@ -1,0 +1,38 @@
+{
+  "comments": {
+    // Define o caractere '#' como o início de um comentário de linha.
+    // Isso permite que o atalho Ctrl+/ (Cmd+/ no Mac) funcione corretamente.
+    "lineComment": "#"
+  },
+  "brackets": [
+    // Define os pares de colchetes/parênteses que o editor deve reconhecer.
+    // Isso habilita o destaque de pares correspondentes.
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    // Configura o fechamento automático de caracteres.
+    // Quando o usuário digita '"', o editor adiciona outro '"'.
+    { "open": "{", "close": "}" },
+    { "open": "[", "close": "]" },
+    { "open": "(", "close": ")" },
+    { "open": "\"", "close": "\"", "notIn": ["string"] }
+  ],
+  "surroundingPairs": [
+    // Permite que o usuário selecione um texto e digite um desses
+    // caracteres para envolver a seleção.
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""]
+  ],
+  "folding": {
+    // Define os marcadores para o dobramento de código (recolher blocos).
+    // Blocos 'if', 'function' e 'for' que terminam com 'end' podem ser recolhidos.
+    "markers": {
+      "start": "^\\s*\\b(if|function|for|while|do)\\b",
+      "end": "^\\s*\\bend\\b"
+    }
+  }
+}

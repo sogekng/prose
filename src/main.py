@@ -1,123 +1,60 @@
-import sys
 import os
-import subprocess
+import sys
 from util.token import TokenType
 from lexer import Lexer
-from parsa import Parser, ParseException, FunctionDeclaration, StructDefinition
-from render import VariableBank
-
-os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
-sys.dont_write_bytecode = True
+from parsa import Parser
+from prose_ast import ParseException, RuntimeException
+from interpreter import Interpreter
 
 EXTENSION = "prose"
-VERSION = "1.1.0"
-USAGE = f"Uso: prose <arquivo_de_entrada.{EXTENSION}>"
+VERSION = "2.0.0"
+USAGE = f"""Uso:
+  prose <arquivo.prose>   (para executar um arquivo)
+  prose                   (para iniciar o modo interativo - REPL)"""
 
-JAVAC_COMMAND = "javac"
-JAVA_COMMAND = "java"
-
-def main():
-    if len(sys.argv) < 2:
-        print(f"Argumento faltando: <arquivo.{EXTENSION}>")
-        print(USAGE)
-        return
-
-    file_path = sys.argv[1]
-
-    if not file_path.endswith(f".{EXTENSION}"):
-        print(f"O arquivo deve ter a extensão '.{EXTENSION}'")
-        return
-
-    input_file_dir = os.path.dirname(file_path) or "."
-    input_file_basename = os.path.basename(file_path)
-    program_name = os.path.splitext(input_file_basename)[0]
-    
-    procache_dir = os.path.join(input_file_dir, "procache")
-    os.makedirs(procache_dir, exist_ok=True)
-        
-    output_path = os.path.join(procache_dir, f"{program_name}.java")
-
+def run(code: str, interpreter: Interpreter, base_path: str):
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            code = file.read()
-
         lexer = Lexer()
         tokens = lexer.tokenize(code)
         
-        parser = Parser(tokens)
+        parser = Parser(tokens, interpreter.environment)
         syntax_tree = parser.parse()
 
-        varbank = parser.varbank
-        struct_definitions = []
-        function_definitions = []
-        main_method_statements = []
+        interpreter.run(syntax_tree, base_path)
 
-        for node in syntax_tree:
-            if isinstance(node, StructDefinition):
-                struct_definitions.append(node.render(varbank))
-            elif isinstance(node, FunctionDeclaration):
-                function_definitions.append(node.render(varbank))
-            else:
-                main_method_statements.append(node.render(varbank))
-        
-        java_structs_code = "\n\n".join(struct_definitions)
-        java_functions_code = "\n\n".join(function_definitions)
-        java_main_code = "\n".join(main_method_statements)
-
-        with open(output_path, 'w', encoding='utf-8') as output_file:
-            output_file.write("import java.util.Scanner;\n")
-            output_file.write("import java.util.ArrayList;\n")
-            output_file.write("import java.util.Arrays;\n\n")
-            
-            output_file.write(f"public class {program_name} {{\n\n")
-
-            if java_structs_code:
-                output_file.write(java_structs_code)
-                output_file.write("\n\n")
-
-            output_file.write("    public static String readme(String prompt, Scanner scanner) {\n")
-            output_file.write("        System.out.print(prompt);\n")
-            output_file.write("        return scanner.nextLine();\n")
-            output_file.write("    }\n\n")
-
-            if java_functions_code:
-                output_file.write(java_functions_code)
-                output_file.write("\n\n")
-
-            output_file.write("    public static void main(String[] args) {\n")
-            output_file.write("        try (Scanner scanner = new Scanner(System.in)) {\n")
-            for line in java_main_code.split('\n'):
-                 output_file.write(f"            {line}\n")
-            output_file.write("        }\n")
-            output_file.write("    }\n")
-            output_file.write("}\n")
-
-        compile_process = subprocess.run(
-            [JAVAC_COMMAND, output_path], capture_output=True, text=True, encoding='utf-8'
-        )
-        if compile_process.returncode != 0:
-            print("--- Erro de Compilação Java ---")
-            print(compile_process.stderr)
-            return
-        
-        subprocess.run(
-            [JAVA_COMMAND, "-cp", procache_dir, program_name], 
-            text=True, encoding='utf-8', check=True
-        )
-
-    except FileNotFoundError:
-        print(f"Erro: Comando não encontrado. Verifique se o Java (JDK) está instalado e no PATH.")
-    except ParseException as e:
-        print("--- Erro de Análise Sintática ---")
+    except (ParseException, RuntimeException) as e:
         print(e)
-    except subprocess.CalledProcessError as e:
-        print("\n--- Erro na Execução do Código ---")
-        print(e.stderr)
     except Exception as e:
-        print(f"\n--- Ocorreu um erro inesperado ---")
-        print(e)
-        import traceback
-        traceback.print_exc()
+        print(f"Erro inesperado: {e}")
+
+def run_file(file_path: str):
+    interpreter = Interpreter()
+    base_path = os.path.dirname(os.path.abspath(file_path))
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            code = file.read()
+        run(code, interpreter, base_path)
+    except FileNotFoundError:
+        print(f"Erro: Arquivo não encontrado em '{file_path}'")
+
+def run_prompt():
+    interpreter = Interpreter()
+    base_path = os.getcwd()
+    print(f"Prose Lang v{VERSION}")
+    
+    while True:
+        try:
+            line = input("prose > ")
+            if line.strip().lower() in ['exit()', 'exit']: break
+            if line.strip(): run(line, interpreter, base_path)
+        except (EOFError, KeyboardInterrupt):
+            break
+
+def main():
+    if len(sys.argv) > 1:
+        run_file(sys.argv[1])
+    else:
+        run_prompt()
 
 if __name__ == "__main__":
     main()

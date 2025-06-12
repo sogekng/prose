@@ -1,10 +1,12 @@
 {
-  "name": "prose-language-support",
-  "displayName": "Prose Language Support",
-  "description": "Syntax highlighting for the Prose language",
+  "name": "prose-language",
+  "displayName": "Prose Language",
+  "description": "Syntax highlighting and execution for the Prose language",
   "version": "1.1.0",
+  "publisher": "sogeking",
+  "icon": "icons/icon.png",
   "engines": {
-    "vscode": "^1.80.0" 
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Programming Languages"
@@ -13,6 +15,10 @@
     "type": "git",
     "url": "https://github.com/sogekng/.prose.git"
   },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onCommand:prose.runFile"
+  ],
   "contributes": {
     "languages": [
       {
@@ -33,6 +39,32 @@
         "scopeName": "source.prose",
         "path": "./syntaxes/prose.tmLanguage.json"
       }
-    ]
+    ],
+    "iconThemes": [
+      {
+        "id": "prose-icons",
+        "label": "Prose Icons",
+        "path": "./prose-icon-theme.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "prose.runFile",
+        "title": "Run Prose File",
+        "icon": {
+          "light": "icons/play.png",
+          "dark": "icons/play.png"
+        }
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceLangId == prose",
+          "command": "prose.runFile",
+          "group": "navigation"
+        }
+      ]
+    }
   }
 }

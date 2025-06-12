@@ -1,0 +1,10 @@
+{
+  "iconDefinitions": {
+    "_prose_file": {
+      "iconPath": "./icons/icon.png"
+    }
+  },
+  "fileExtensions": {
+    "prose": "_prose_file"
+  }
+}
