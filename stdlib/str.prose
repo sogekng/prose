@@ -1,0 +1,87 @@
+function split(string text, string delimiter) -> list<string>
+  create list<string> variable result to [];
+  create string variable current_word to "";
+  create integer variable i to 0;
+
+  while i < length(text) do
+    create string variable char to substring(text, i, i + 1);
+    if char == delimiter then
+      add(result, current_word);
+      set current_word to "";
+    else
+      set current_word to current_word + char;
+    end
+    set i to i + 1;
+  end
+  add(result, current_word);
+  return result;
+end
+
+function join(list<string> words, string delimiter) -> string
+  create string variable result to "";
+  create integer variable i to 0;
+
+  while i < length(words) do
+    set result to result + words[i];
+    if i < length(words) - 1 then
+      set result to result + delimiter;
+    end
+    set i to i + 1;
+  end
+  return result;
+end
+
+function contains(string text, string substring) -> boolean
+  create integer variable i to 0;
+  while i <= length(text) - length(substring) do
+    if substring(text, i, i + length(substring)) == substring then
+      return true;
+    end
+    set i to i + 1;
+  end
+  return false;
+end
+
+function starts_with(string text, string prefix) -> boolean
+  if length(text) < length(prefix) then
+    return false;
+  end
+  return substring(text, 0, length(prefix)) == prefix;
+end
+
+function ends_with(string text, string suffix) -> boolean
+  if length(text) < length(suffix) then
+    return false;
+  end
+  return substring(text, length(text) - length(suffix), length(text)) == suffix;
+end
+
+function trim(string text) -> string
+  create integer variable start to 0;
+  create integer variable end_index to length(text) - 1;
+
+  while start <= end_index && (substring(text, start, start + 1) == " " || substring(text, start, start + 1) == "\n") do
+    set start to start + 1;
+  end
+
+  while end_index >= start && (substring(text, end_index, end_index + 1) == " " || substring(text, end_index, end_index + 1) == "\n") do
+    set end_index to end_index - 1;
+  end
+
+  return substring(text, start, end_index + 1);
+end
+
+function replace(string text, string old, string new) -> string
+  create string variable result to "";
+  create integer variable i to 0;
+  while i < length(text) do
+    if substring(text, i, i + length(old)) == old then
+      set result to result + new;
+      set i to i + length(old);
+    else
+      set result to result + substring(text, i, i + 1);
+      set i to i + 1;
+    end
+  end
+  return result;
+end

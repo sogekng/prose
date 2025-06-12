@@ -23,6 +23,12 @@ class StringType(Type): pass
 class BooleanType(Type): pass
 class VoidType(Type): pass
 
+
+@dataclass
+class ModuleType(Type):
+    name: str
+    def __repr__(self): return f"module<{self.name}>"
+
 @dataclass
 class ListType(Type):
     element_type: Type

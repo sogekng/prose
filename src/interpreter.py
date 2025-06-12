@@ -1,9 +1,11 @@
 import os
+import sys
 from prose_ast import *
 from render import (VariableBank, FunctionType, IntegerType, RationalType, 
                     StringType, BooleanType, ListType, StructType, VoidType)
 from lexer import Lexer
 from parsa import Parser
+from util.token import Token, TokenType
 
 class ValueWrapper:
     def __init__(self, value, value_type: Type):
@@ -21,6 +23,11 @@ class ProseFunction:
         self.closure = closure
     def __repr__(self): return f"<ProseFunction {self.declaration.name.value}>"
 
+class NativeFunction:
+    def __init__(self, python_callable):
+        self.callable = python_callable
+    def __repr__(self): return f"<NativeFunction {self.callable.__name__}>"
+
 class StructInstance:
     def __repr__(self):
         fields = ', '.join(f'{k}={v}' for k, v in vars(self).items())
@@ -32,10 +39,83 @@ class ModuleInstance:
         self.environment = env
     def __repr__(self): return f"<ModuleInstance {self.name}>"
 
+def native_time(args: list[ValueWrapper]) -> ValueWrapper:
+    from datetime import datetime
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return ValueWrapper(now_str, StringType())
+
+def native_exit(args: list[ValueWrapper]) -> ValueWrapper:
+    exit_code = 0
+    if args:
+        exit_code = args[0].value
+    quit(exit_code)
+    return ValueWrapper(None, VoidType())
+
+def native_argv(args: list[ValueWrapper]) -> ValueWrapper:
+    script_args = sys.argv[1:]
+    return ValueWrapper(script_args, ListType(StringType()))
+
+def native_type_of(args: list[ValueWrapper]) -> ValueWrapper:
+    if not args:
+        raise Exception("type_of espera 1 argumento.")
+    type_name = repr(args[0].type)
+    return ValueWrapper(type_name, StringType())
+
+def native_to_string(args: list[ValueWrapper]) -> ValueWrapper:
+    if not args:
+        raise Exception("to_string espera 1 argumento.")
+    
+    value_str = str(args[0].value)
+    if isinstance(args[0].type, BooleanType):
+        value_str = value_str.lower()
+        
+    return ValueWrapper(value_str, StringType())
+
+def native_to_integer(args: list[ValueWrapper]) -> ValueWrapper:
+    if not args or not isinstance(args[0].type, StringType):
+        raise Exception("to_integer espera 1 argumento do tipo string.")
+    
+    try:
+        num = int(args[0].value)
+        return ValueWrapper(num, IntegerType())
+    except ValueError:
+        raise Exception(f"Não foi possível converter a string '{args[0].value}' para integer.")
+    
+def native_uppercase(args: list[ValueWrapper]) -> ValueWrapper:
+    if not args or not isinstance(args[0].type, StringType):
+        raise Exception("uppercase espera 1 argumento do tipo string.")
+    return ValueWrapper(args[0].value.upper(), StringType())
+
+def native_lowercase(args: list[ValueWrapper]) -> ValueWrapper:
+    if not args or not isinstance(args[0].type, StringType):
+        raise Exception("lowercase espera 1 argumento do tipo string.")
+    return ValueWrapper(args[0].value.lower(), StringType())
+
 class Interpreter:
     def __init__(self):
         self.environment = VariableBank()
         self.imported_modules = {}
+        self._setup_native_libs()
+
+    def _setup_native_libs(self):
+        sys_env = VariableBank()
+
+        sys_env.create('time', True, FunctionType([], StringType()), NativeFunction(native_time))
+        sys_env.create('exit', True, FunctionType([IntegerType()], VoidType()), NativeFunction(native_exit))
+        sys_env.create('argv', True, FunctionType([], ListType(StringType())), NativeFunction(native_argv))
+        sys_env.create('type_of', True, FunctionType([], StringType()), NativeFunction(native_type_of))
+
+        sys_env.create('to_string', True, FunctionType([], StringType()), NativeFunction(native_to_string))
+        
+        sys_env.create('to_integer', True, FunctionType([StringType()], IntegerType()), NativeFunction(native_to_integer))
+        sys_env.create('uppercase', True, FunctionType([StringType()], StringType()), NativeFunction(native_uppercase))
+        sys_env.create('lowercase', True, FunctionType([StringType()], StringType()), NativeFunction(native_lowercase))
+
+        sys_module = ModuleInstance('sys', sys_env)
+        for name, var in sys_env.variables.items():
+            setattr(sys_module, name, var.value)
+        
+        self.environment.create('sys', True, ModuleType('sys'), sys_module)
 
     def visit(self, node):
         method_name = f'visit_{type(node).__name__}'
@@ -73,15 +153,24 @@ class Interpreter:
         if module_name in self.imported_modules:
             return self.imported_modules[module_name]
 
-        module_file_name = module_name + '.prose'
-        module_path = os.path.join(self.base_path, module_file_name)
+        relative_path = os.path.join(self.base_path, module_name + '.prose')
+        stdlib_path = os.path.join(os.path.dirname(__file__), '..', 'stdlib', module_name + '.prose')
+
+        module_path = None
+        if os.path.exists(relative_path):
+            module_path = relative_path
+        elif os.path.exists(stdlib_path):
+            module_path = stdlib_path
+        else:
+            raise RuntimeException(f"Módulo '{module_name}' não encontrado.", module_name_token)
+
         absolute_path = os.path.abspath(module_path)
 
         try:
             with open(absolute_path, 'r', encoding='utf-8') as file:
                 code = file.read()
         except FileNotFoundError:
-            raise RuntimeException(f"Módulo '{module_name}' não encontrado.", module_name_token)
+            raise RuntimeException(f"Módulo '{module_name}' não encontrado em '{absolute_path}'.", module_name_token)
 
         module_interpreter = Interpreter()
         lexer = Lexer()
@@ -234,6 +323,16 @@ class Interpreter:
         
         callee_wrapper = self.visit(node.callee)
         func_obj = callee_wrapper.value
+
+        if isinstance(func_obj, NativeFunction):
+            arg_wrappers = [self.visit(arg) for arg in node.arguments]
+            try:
+                return func_obj.callable(arg_wrappers)
+            except Exception as e:
+                func_name = "função nativa"
+                if isinstance(node.callee, MemberAccess):
+                    func_name = f"'{node.callee.member.value}'"
+                raise RuntimeException(f"Erro ao executar {func_name}: {e}", node.callee.token if hasattr(node.callee, 'token') else Token(TokenType.NONE, '', 0, 0))
         
         if not isinstance(func_obj, ProseFunction):
             raise RuntimeException(f"Expressão do tipo '{callee_wrapper.type}' não é chamável.", node.callee.token if isinstance(node.callee, Value) else Token(TokenType.NONE,'',0,0))
@@ -242,6 +341,7 @@ class Interpreter:
         func_env = VariableBank(parent=func_obj.closure)
         for i, param_node in enumerate(func_obj.declaration.params):
             func_env.create(param_node[1].value, False, param_node[0].to_type_object(), arg_values[i])
+        
         return_value_wrapper = ValueWrapper(None, VoidType())
         try:
             self.execute_block(func_obj.declaration.body, func_env)

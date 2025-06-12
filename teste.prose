@@ -6,14 +6,14 @@
 # definidas pelo usuário e funções nativas de listas e strings.
 # -----------------------------------------------------------------------------
 
-writeln "--- INICIO DOS TESTES ABRANGENTES ---";
-writeln "";
+writeln("--- INICIO DOS TESTES ABRANGENTES ---");
+writeln("");
 
 # --- 0. Teste de Hello World ---
-writeln "Hello World!";
+writeln("Hello World!");
 
 # --- 1. Teste de Variáveis, Constantes e Tipos de Dados ---
-writeln "--- Seção 1: Variáveis e Tipos de Dados ---";
+writeln("--- Seção 1: Variáveis e Tipos de Dados ---");
 
 # Declaração e inicialização de variáveis e constantes
 create integer constant ANO_ATUAL to 2024;
@@ -21,82 +21,82 @@ create rational variable PI to 3.14159;
 create boolean variable TESTE_PASSOU to true;
 create string variable MENSAGEM to "Prose e uma linguagem funcional!";
 
-writeln "Constante ANO_ATUAL: " + ANO_ATUAL;
-writeln "Variavel PI: " + PI;
-writeln "Variavel booleana: " + TESTE_PASSOU;
-writeln "Mensagem inicial: " + MENSAGEM;
+writeln("Constante ANO_ATUAL: " + sys.to_string(ANO_ATUAL));
+writeln("Variavel PI: " + sys.to_string(PI));
+writeln("Variavel booleana: " + sys.to_string(TESTE_PASSOU));
+writeln("Mensagem inicial: " + MENSAGEM);
 
 # Teste de reatribuição (set)
 set MENSAGEM to "A reatribuicao funciona!";
-writeln "Mensagem apos 'set': " + MENSAGEM;
-writeln "";
+writeln("Mensagem apos 'set': " + MENSAGEM);
+writeln("");
 
 
 # --- 2. Teste de Operadores e Expressões ---
-writeln "--- Seção 2: Operadores e Expressões ---";
+writeln("--- Seção 2: Operadores e Expressões ---");
 
 create integer variable a to 10;
 create integer variable b to 3;
 create rational variable c to 2.5;
 
-writeln "a = 10, b = 3, c = 2.5";
-writeln "a + b * 2 = " + (a + b * 2);      # Teste de precedência
-writeln "a / b = " + (a / b);              # Divisão de inteiros
-writeln "a % b = " + (a % b);              # Módulo
-writeln "a / c = " + (a / c);              # Divisão com racional
-writeln "(true && false) || true = " + ((true && false) || true); # Lógica
-writeln "a >= b == " + (a >= b);
-writeln "a <= 10 == " + (a <= 10);
-writeln "";
+writeln("a = 10, b = 3, c = 2.5");
+writeln("a + b * 2 = " + sys.to_string(a + b * 2));      # Teste de precedência
+writeln("a / b = " + sys.to_string(a / b));              # Divisão de inteiros
+writeln("a % b = " + sys.to_string(a % b));              # Módulo
+writeln("a / c = " + sys.to_string(a / c));              # Divisão com racional
+writeln("(true && false) || true = " + sys.to_string((true && false) || true)); # Lógica
+writeln("a >= b == " + sys.to_string(a >= b));
+writeln("a <= 10 == " + sys.to_string(a <= 10));
+writeln("");
 
 
 # --- 3. Teste de Estruturas de Controle de Fluxo ---
-writeln "--- Seção 3: Estruturas de Controle ---";
+writeln("--- Seção 3: Estruturas de Controle ---");
 
 # Teste IF-ELIF-ELSE
 create integer variable nota to 85;
 if nota >= 90 then
-    writeln "Nota " + nota + ": Conceito A";
+    writeln("Nota " + sys.to_string(nota) + ": Conceito A");
 elif nota >= 80 then
-    writeln "Nota " + nota + ": Conceito B";
+    writeln("Nota " + sys.to_string(nota) + ": Conceito B");
 elif nota >= 70 then
-    writeln "Nota " + nota + ": Conceito C";
+    writeln("Nota " + sys.to_string(nota) + ": Conceito C");
 else
-    writeln "Nota " + nota + ": Conceito D";
+    writeln("Nota " + sys.to_string(nota) + ": Conceito D");
 end
 
 # Teste WHILE
-writeln "Contagem regressiva com 'while':";
+writeln("Contagem regressiva com 'while':");
 set a to 3;
 while a > 0 do
-    write a + "... ";
+    write(sys.to_string(a) + "... ");
     set a to a - 1;
 end
-writeln "Fim!";
+writeln("Fim!");
 
 # Teste DO-WHILE
-writeln "Contagem com 'do-while':";
+writeln("Contagem com 'do-while':");
 set b to 0;
 do
     set b to b + 1;
-    write b + " ";
+    write(sys.to_string(b) + " ");
 while b < 3 end
-writeln "";
+writeln("");
 
 # Teste do Laço FOR
-writeln "Iterando sobre a lista de frutas:";
+writeln("Iterando sobre a lista de frutas:");
 create list<string> variable frutas to ["Manga", "Uva", "Kiwi"];
 
 for fruta in frutas do
-    writeln "  - Fruta da vez: " + fruta;
+    writeln("  - Fruta da vez: " + fruta);
 end
 
-writeln "Fim da iteração.";
-writeln "";
+writeln("Fim da iteração.");
+writeln("");
 
 
 # --- 4. Teste de Funções Definidas pelo Usuário ---
-writeln "--- Seção 4: Funções do Usuário ---";
+writeln("--- Seção 4: Funções do Usuário ---");
 
 # Função com retorno: cálculo de fatorial
 function fatorial(integer n) -> integer
@@ -109,48 +109,47 @@ end
 
 # Procedimento sem retorno (void)
 function exibir_separador() -> void
-    writeln "=====================================";
+    writeln("=====================================");
 end
 
 exibir_separador();
-writeln "O fatorial de 5 e: " + fatorial(5);
+writeln("O fatorial de 5 e: " + sys.to_string(fatorial(5)));
 exibir_separador();
-writeln "";
+writeln("");
 
 
 # --- 5. Teste de Listas Tipadas e Funções Nativas de Lista ---
-writeln "--- Seção 5: Listas e Funções Nativas ---";
+writeln("--- Seção 5: Listas e Funções Nativas ---");
 
-create list<string> variable minha_lista_de_compras;
+create list<string> variable minha_lista_de_compras to [];
 add(minha_lista_de_compras, "Maca");
 add(minha_lista_de_compras, "Banana");
 add(minha_lista_de_compras, "Laranja");
 
-writeln "A lista tem " + length(minha_lista_de_compras) + " itens.";
+writeln("A lista tem " + sys.to_string(length(minha_lista_de_compras)) + " itens.");
 
-create string variable segundo_item;
-set segundo_item to get(minha_lista_de_compras, 1);
-writeln "O segundo item da lista e: " + segundo_item;
+create string variable segundo_item to get(minha_lista_de_compras, 1);
+writeln("O segundo item da lista e: " + segundo_item);
 
 remove(minha_lista_de_compras, 0);
-writeln "Apos remover o primeiro item, a lista tem " + length(minha_lista_de_compras) + " itens.";
+writeln("Apos remover o primeiro item, a lista tem " + sys.to_string(length(minha_lista_de_compras)) + " itens.");
 set segundo_item to get(minha_lista_de_compras, 0);
-writeln "O novo primeiro item e: " + segundo_item;
-writeln "";
+writeln("O novo primeiro item e: " + segundo_item);
+writeln("");
 
 
 # --- 6. Teste de Funções Nativas de String ---
-writeln "--- Seção 6: Funções Nativas de String ---";
+writeln("--- Seção 6: Funções Nativas de String ---");
 create string variable texto_original to "Linguagem Prose";
-writeln "Original: " + texto_original;
-writeln "Maiusculas: " + uppercase(texto_original);
-writeln "Minusculas: " + lowercase(texto_original);
-writeln "Substring(10, 15): " + substring(texto_original, 10, 15);
-writeln "";
+writeln("Original: " + texto_original);
+writeln("Maiusculas: " + uppercase(texto_original));
+writeln("Minusculas: " + lowercase(texto_original));
+writeln("Substring(10, 15): " + substring(texto_original, 10, 15));
+writeln("");
 
 
 # --- 7. Teste de Entrada de Dados (I/O) ---
-writeln "--- Seção 7: Entrada de Dados ---";
+writeln("--- Seção 7: Entrada de Dados ---");
 
 create string variable nome_usuario;
 create integer variable idade_usuario;
@@ -158,10 +157,10 @@ create integer variable idade_usuario;
 readme nome_usuario "Por favor, digite seu nome: ";
 readme idade_usuario "Agora, digite sua idade: ";
 
-writeln "";
+writeln("");
 
 # --- 8. Teste de Estruturas (Structs) ---
-writeln "--- Seção 8: Teste de Estruturas (Structs) ---";
+writeln("--- Seção 8: Teste de Estruturas (Structs) ---");
 
 # Definição de um novo tipo 'Pessoa'
 create type Pessoa (
@@ -177,15 +176,15 @@ set p1.nome to nome_usuario;
 set p1.idade to idade_usuario;
 
 # Leitura e exibição dos membros
-writeln "Dados da Pessoa:";
-writeln "Nome: " + p1.nome;
-writeln "Idade: " + p1.idade;
-writeln "";
+writeln("Dados da Pessoa:");
+writeln("Nome: " + p1.nome);
+writeln("Idade: " + sys.to_string(p1.idade));
+writeln("");
 
 # --- 9. Teste de Lista de Estruturas ---
-writeln "--- Seção 9: Teste de Lista de Estruturas ---";
+writeln("--- Seção 9: Teste de Lista de Estruturas ---");
 
-create list<Pessoa> variable agenda;
+create list<Pessoa> variable agenda to [];
 
 # Cria uma segunda pessoa
 create Pessoa variable p2;
@@ -196,11 +195,44 @@ set p2.idade to 28;
 add(agenda, p1);
 add(agenda, p2);
 
-writeln "Iterando sobre a lista de Pessoas na agenda:";
+writeln("Iterando sobre a lista de Pessoas na agenda:");
 for contato in agenda do
-    writeln "  -> Contato: " + contato.nome + " (" + contato.idade + " anos)";
+    writeln("  -> Contato: " + contato.nome + " (" + sys.to_string(contato.idade) + " anos)");
 end
-writeln "";
+writeln("");
 
+# --- 10. Teste das Bibliotecas Externas ---
+writeln("--- Seção 10: Teste das Bibliotecas Externas ---");
 
-writeln "--- FIM DOS TESTES ABRANGENTES ---";
+from math import abs, pow, max;
+
+writeln("--- Testando a Biblioteca Math ---");
+writeln("O valor absoluto de -15.5 é: " + sys.to_string(abs(0 - 15.5)));
+writeln("2 elevado a 10 é: " + sys.to_string(pow(2.0, 10)));
+writeln("O maior número entre 100 e 101 é: " + sys.to_string(max(100.0, 101.0)));
+writeln("");
+
+from str import split, join, contains, starts_with, ends_with, trim, replace;
+
+writeln("--- Testando a Biblioteca 'str' ---");
+create list<string> variable lista_split to split("laranja;maca;banana", ";");
+write("split(\"laranja;maca;banana\", \";\") -> [");
+for item in lista_split do
+  write("\"" + item + "\", ");
+end
+writeln("]");
+
+create string variable texto_join to join(["Prose", "é", "legal"], " ");
+writeln("join([\"Prose\", \"é\", \"legal\"], \" \") -> \"" + texto_join + "\"");
+
+create boolean variable tem_futuro to contains("O futuro é agora", "futuro");
+writeln("contains(\"O futuro é agora\", \"futuro\") -> " + sys.to_string(tem_futuro));
+
+create boolean variable comeca_https to starts_with("https://prose-lang.dev", "https");
+writeln("starts_with(\"https://prose-lang.dev\", \"https\") -> " + sys.to_string(comeca_https));
+
+create string variable frase_corrigida to replace("Eu gosto de Java", "Java", "Prose");
+writeln("replace na frase -> \"" + frase_corrigida + "\"");
+writeln("");
+
+writeln("--- FIM DOS TESTES ABRANGENTES ---");

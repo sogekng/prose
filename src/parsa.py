@@ -31,7 +31,7 @@ class Parser:
         return self._parse_statement()
 
     def _parse_block(self) -> list[Statement]:
-        statements = []; terminators = {TokenType.END, TokenType.ELSE, TokenType.ELIF, TokenType.WHILE, TokenType.EOF}
+        statements = []; terminators = {TokenType.END, TokenType.ELSE, TokenType.ELIF, TokenType.EOF}
         while self.current_token.token_type not in terminators: 
             statements.append(self._parse_statement())
         return statements
@@ -64,18 +64,36 @@ class Parser:
     def _parse_import_statement(self) -> ImportStatement:
         if self.current_token.token_type == TokenType.IMPORT:
             self.consume(TokenType.IMPORT)
-            module_name = self.consume(TokenType.IDENTIFIER)
-            return ImportStatement(module_name)
+            module_name_token = self.current_token
+
+            if module_name_token.token_type not in {TokenType.IDENTIFIER, TokenType.TYPE}:
+                raise ParseException(f"Esperava um nome de módulo, mas encontrou {module_name_token.token_type.name}", module_name_token)
+            self.advance()
+            return ImportStatement(module_name_token)
         
         self.consume(TokenType.FROM)
-        module_name = self.consume(TokenType.IDENTIFIER)
+        module_name_token = self.current_token
+        if module_name_token.token_type not in {TokenType.IDENTIFIER, TokenType.TYPE}:
+            raise ParseException(f"Esperava um nome de módulo, mas encontrou {module_name_token.token_type.name}", module_name_token)
+        self.advance()
+
         self.consume(TokenType.IMPORT)
         
-        names = [self.consume(TokenType.IDENTIFIER)]
-        while self.current_token.token_type == TokenType.COMMA:
-            self.consume(TokenType.COMMA)
-            names.append(self.consume(TokenType.IDENTIFIER))
-        return ImportStatement(module_name, names)
+        names = []
+
+        while self.current_token.token_type != TokenType.SEMICOLON:
+            name_token = self.current_token
+            if name_token.token_type not in {TokenType.IDENTIFIER, TokenType.TYPE}:
+                raise ParseException(f"Esperava um nome para importar, mas encontrou {name_token.token_type.name}", name_token)
+            names.append(name_token)
+            self.advance()
+
+            if self.current_token.token_type == TokenType.COMMA:
+                self.consume(TokenType.COMMA)
+            elif self.current_token.token_type != TokenType.SEMICOLON:
+                raise ParseException(f"Esperava ',' ou ';' após o nome importado, mas encontrou {self.current_token.token_type.name}", self.current_token)
+
+        return ImportStatement(module_name_token, names)
 
     def _parse_type(self) -> TypeNode:
         if self.current_token.token_type == TokenType.FUNCTION:
@@ -170,8 +188,17 @@ class Parser:
         body = self._parse_block(); self.consume(TokenType.END); return WhileStructure(condition, body)
     
     def _parse_do_while_structure(self):
-        self.consume(TokenType.DO); body = self._parse_block(); self.consume(TokenType.WHILE)
-        condition = self._parse_expression(); self.consume(TokenType.END); return DoWhileStructure(condition, body)
+        do_token = self.consume(TokenType.DO)
+        body = []
+        while self.current_token.token_type != TokenType.WHILE:
+            if self.current_token.token_type == TokenType.EOF:
+                raise ParseException("Laço 'do' iniciado não foi fechado por um 'while'", do_token)
+            body.append(self._parse_statement())
+        
+        self.consume(TokenType.WHILE)
+        condition = self._parse_expression()
+        self.consume(TokenType.END)
+        return DoWhileStructure(condition, body)
 
     def _parse_for_structure(self) -> ForStructure:
         self.consume(TokenType.FOR); loop_variable = self.consume(TokenType.IDENTIFIER); self.consume(TokenType.IN); iterable_expression = self._parse_expression(); self.consume(TokenType.DO)

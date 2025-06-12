@@ -1,0 +1,48 @@
+create rational constant PI to 3.14159;
+
+function factorial(integer n) -> integer
+  create integer variable result to 1;
+  create integer variable i to n;
+  while i > 1 do
+    set result to result * i;
+    set i to i - 1;
+  end
+  return result;
+end
+
+function abs(rational n) -> rational
+  if n < 0 then
+    return 0 - n;
+  end
+  return n;
+end
+
+function pow(rational base, integer exponent) -> rational
+  if exponent == 0 then
+    return 1.0;
+  end
+
+  create rational variable result to 1.0;
+  create integer variable i to 0;
+
+  while i < exponent do
+    set result to result * base;
+    set i to i + 1;
+  end
+
+  return result;
+end
+
+function max(rational a, rational b) -> rational
+  if a > b then
+    return a;
+  end
+  return b;
+end
+
+function min(rational a, rational b) -> rational
+  if a < b then
+    return a;
+  end
+  return b;
+end
