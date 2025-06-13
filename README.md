@@ -166,3 +166,7 @@ Com sua evolução, o processo de execução da Prose agora é o de um **intérp
 1.  **Análise Léxica:** O código-fonte é quebrado em *tokens*.
 2.  **Análise Sintática:** Os tokens são organizados em uma Árvore de Sintaxe Abstrata (AST), e a checagem de tipos é realizada para validar a semântica.
 3.  **Execução (Interpretação):** O intérprete "caminha" pela AST, executando cada nó diretamente. Ele gerencia uma pilha de escopos para variáveis e funções, garantindo que closures e escopos aninhados funcionem corretamente.
+
+## 🚀 Visite o Site!
+
+**[➡️ Acesse a página da Prose aqui!](https://sogekng.github.io/prose/)**
